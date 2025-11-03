@@ -18,7 +18,7 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+
     if (user && (await bcrypt.compare(pass, user.password as string))) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const userObject = user.toObject();

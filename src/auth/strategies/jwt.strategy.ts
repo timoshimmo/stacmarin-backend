@@ -13,6 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       secretOrKey: configService.get('JWT_SECRET'),
     });
   }
@@ -22,8 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return result; // This becomes req.user
+
+    // The `toObject()` method applies the transform function from the schema,
+    // which removes the password and adds the virtual 'id' field.
+    // This ensures the `req.user` object is clean and serializable.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return user.toObject();
   }
 }
