@@ -50,7 +50,7 @@ export class User extends Document {
   @Prop({
     type: String,
     enum: UserRole,
-    default: UserRole.MEMBER,
+    default: UserRole.MANAGER,
   })
   role: UserRole;
 

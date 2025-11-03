@@ -1,11 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
-import { User, UserRole } from '../users/entities/user.entity';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { User } from '../users/entities/user.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -14,7 +24,6 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
-  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   create(@Body() createTaskDto: CreateTaskDto, @GetUser() user: User) {
     return this.tasksService.create(createTaskDto, user);
   }
@@ -35,7 +44,11 @@ export class TasksController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @GetUser() user: User) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTaskDto: UpdateTaskDto,
+    @GetUser() user: User,
+  ) {
     return this.tasksService.update(id, updateTaskDto, user);
   }
 
