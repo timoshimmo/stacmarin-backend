@@ -5,8 +5,13 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS
-  app.enableCors();
+  //Enable CORS
+  app.enableCors({
+    origin: true, // Reflects the request origin. For production, consider a whitelist: ['https://your-frontend-domain.com']
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  });
 
   // Use a global validation pipe to enforce type-safe DTOs
   app.useGlobalPipes(
