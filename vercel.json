@@ -12,7 +12,6 @@
       "dest": "dist/main.js"
     }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "dist/main.js" }],
   "headers": [
     {
       "source": "/(.*)",
