@@ -23,7 +23,7 @@ export class TasksService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
+  /* async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
     const { assigneeIds, ...taskData } = createTaskDto;
 
     let assignees: User[] = [];
@@ -52,6 +52,50 @@ export class TasksService {
       }
     }
 
+    return this.taskModel
+      .findById(savedTask.id)
+      .populate('owner assignees')
+      .exec();
+  } */
+
+  async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
+    const { assigneeIds, ...taskData } = createTaskDto;
+
+    // Determine the final list of assignee IDs for the new task.
+    let finalAssigneeIds: string[];
+    if (assigneeIds && assigneeIds.length > 0) {
+      finalAssigneeIds = assigneeIds;
+    } else {
+      // If no assignees are provided, assign the task to the creator by default.
+      finalAssigneeIds = [user.id];
+    }
+
+    // Fetch the full user documents for the assignees. This is needed for sending notifications.
+    const assignees = await this.usersService.findByIds(finalAssigneeIds);
+
+    const createdTask = new this.taskModel({
+      ...taskData,
+      // Pass the creator's ID for the owner field.
+      owner: user.id,
+      // Pass the array of assignee IDs. Mongoose will cast these to ObjectIds.
+      assignees: finalAssigneeIds,
+    });
+
+    const savedTask = await createdTask.save();
+
+    // Create notifications for assignees, but don't notify the creator if they assigned it to themselves.
+    for (const assignee of assignees) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (assignee.id.toString() !== user.id.toString()) {
+        await this.notificationsService.create({
+          user: assignee, // The service expects a User document or object with an ID.
+          type: 'task',
+          message: `${user.name} assigned you a new task: "${savedTask.title}"`,
+        });
+      }
+    }
+
+    // Find the newly created task by its ID and populate the 'owner' and 'assignees' fields before returning it.
     return this.taskModel
       .findById(savedTask.id)
       .populate('owner assignees')
