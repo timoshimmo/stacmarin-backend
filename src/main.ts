@@ -5,6 +5,9 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Set a global prefix to match the Vercel rewrite configuration
+  app.setGlobalPrefix('api');
+
   //Enable CORS
   app.enableCors({
     origin: true, // Reflects the request origin. For production, consider a whitelist: ['https://your-frontend-domain.com']
