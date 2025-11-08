@@ -1,5 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { EventCategory } from '../entities/event.entity';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsDateString,
+} from 'class-validator';
+import * as eventEntity from '../entities/event.entity';
 
 export class CreateEventDto {
   @IsString()
@@ -20,5 +26,5 @@ export class CreateEventDto {
 
   @IsEnum(['Workshop', 'Social', 'Holiday', 'Meeting'])
   @IsNotEmpty()
-  category: EventCategory;
+  category: eventEntity.EventCategory;
 }

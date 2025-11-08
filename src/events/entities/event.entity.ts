@@ -8,15 +8,17 @@ export type EventCategory = 'Workshop' | 'Social' | 'Holiday' | 'Meeting';
   timestamps: true,
   toJSON: {
     virtuals: true,
-    transform: (doc, ret) => {
+    transform: (doc, ret: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       delete ret._id;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       delete ret.__v;
     },
   },
   toObject: { virtuals: true },
 })
 export class Event extends Document {
-  id: string;
+  declare id: string;
 
   @Prop({ required: true })
   title: string;
