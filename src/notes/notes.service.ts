@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -17,13 +21,16 @@ export class NotesService {
   create(createNoteDto: CreateNoteDto, user: User): Promise<Note> {
     const createdNote = new this.noteModel({
       ...createNoteDto,
-      owner: user,
+      owner: user.id, // Correctly assign the user's ID
     });
     return createdNote.save();
   }
 
   findAllForUser(userId: string): Promise<Note[]> {
-    return this.noteModel.find({ owner: userId }).sort({ lastModified: 'desc' }).exec();
+    return this.noteModel
+      .find({ owner: userId })
+      .sort({ lastModified: 'desc' })
+      .exec();
   }
 
   // FIX: Change return type to NoteDocument to ensure methods like .save() and properties like ._id are available.
@@ -32,13 +39,20 @@ export class NotesService {
     if (!note) {
       throw new NotFoundException(`Note with ID "${id}" not found`);
     }
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     if (note.owner.toString() !== userId) {
-      throw new ForbiddenException('You do not have permission to access this note');
+      throw new ForbiddenException(
+        'You do not have permission to access this note',
+      );
     }
     return note;
   }
 
-  async update(id: string, updateNoteDto: UpdateNoteDto, userId: string): Promise<Note> {
+  async update(
+    id: string,
+    updateNoteDto: UpdateNoteDto,
+    userId: string,
+  ): Promise<Note> {
     const note = await this.findOne(id, userId);
     Object.assign(note, updateNoteDto);
     return note.save();
