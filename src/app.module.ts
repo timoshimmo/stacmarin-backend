@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TasksModule } from './tasks/tasks.module';
 import { NotesModule } from './notes/notes.module';
+import { EventsModule } from './events/events.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
@@ -20,6 +21,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     TasksModule,
     NotesModule,
     NotificationsModule,
+    EventsModule,
   ],
   controllers: [],
   providers: [],

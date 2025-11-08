@@ -23,41 +23,6 @@ export class TasksService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  /* async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
-    const { assigneeIds, ...taskData } = createTaskDto;
-
-    let assignees: User[] = [];
-    if (assigneeIds && assigneeIds.length > 0) {
-      assignees = await this.usersService.findByIds(assigneeIds);
-    } else {
-      assignees = [user]; // Assign to creator by default
-    }
-
-    const createdTask = new this.taskModel({
-      ...taskData,
-      owner: user,
-      assignees: assignees,
-    });
-
-    const savedTask = await createdTask.save();
-
-    // Create notifications for assignees
-    for (const assignee of assignees) {
-      if (assignee.id !== user.id) {
-        await this.notificationsService.create({
-          user: assignee,
-          type: 'task',
-          message: `${user.name} assigned you a new task: "${savedTask.title}"`,
-        });
-      }
-    }
-
-    return this.taskModel
-      .findById(savedTask.id)
-      .populate('owner assignees')
-      .exec();
-  } */
-
   async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
     const { assigneeIds, ...taskData } = createTaskDto;
 
