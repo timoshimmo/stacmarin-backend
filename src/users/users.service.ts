@@ -13,8 +13,13 @@ export class UsersService {
 
   // FIX: Change return type to UserDocument.
   async findOneByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).select('+password').exec();
   }
+
+  // FIX: Change return type to UserDocument.
+  /*async findOneByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email }).exec();
+  }*/
 
   // FIX: Change return type to UserDocument.
   async findOne(id: string): Promise<UserDocument | null> {

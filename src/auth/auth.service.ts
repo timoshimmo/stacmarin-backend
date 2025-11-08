@@ -18,6 +18,15 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
+    if (user && (await bcrypt.compare(pass, user.password as string))) {
+      // The schema's toObject transform removes the password automatically.
+      return user.toObject();
+    }
+    return null;
+  }
+
+  /*async validateUser(email: string, pass: string): Promise<any> {
+    const user = await this.usersService.findOneByEmail(email);
 
     if (user && (await bcrypt.compare(pass, user.password as string))) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -27,7 +36,7 @@ export class AuthService {
       return result;
     }
     return null;
-  }
+  } */
 
   async login(loginDto: LoginDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

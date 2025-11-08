@@ -44,8 +44,11 @@ export class User extends Document {
   @Prop({ required: true, unique: true, index: true })
   email: string;
 
-  @Prop()
-  password?: string;
+  /*@Prop()
+  password?: string; */
+
+  @Prop({ required: true, select: false })
+  password: string;
 
   @Prop({
     type: String,
