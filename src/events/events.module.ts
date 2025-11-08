@@ -4,10 +4,14 @@ import { EventsService } from './events.service';
 import { EventsController } from './events.controller';
 import { Event, EventSchema } from './entities/event.entity';
 import { EventsScheduler } from './events.scheduler';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
+    NotificationsModule,
+    UsersModule,
   ],
   controllers: [EventsController],
   providers: [EventsService, EventsScheduler],
