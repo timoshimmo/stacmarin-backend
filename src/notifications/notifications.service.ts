@@ -6,7 +6,8 @@ import { Notification } from './entities/notification.entity';
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<Notification>,
+    @InjectModel(Notification.name)
+    private notificationModel: Model<Notification>,
   ) {}
 
   async create(notificationData: Partial<Notification>): Promise<Notification> {
@@ -15,17 +16,17 @@ export class NotificationsService {
   }
 
   findAllForUser(userId: string): Promise<Notification[]> {
-    return this.notificationModel.find({ user: userId })
+    return this.notificationModel
+      .find({ user: userId })
       .sort({ createdAt: 'desc' })
       .limit(50)
       .exec();
   }
 
   async markAllAsRead(userId: string): Promise<{ message: string }> {
-    await this.notificationModel.updateMany(
-      { user: userId, isRead: false },
-      { $set: { isRead: true } },
-    ).exec();
+    await this.notificationModel
+      .updateMany({ user: userId, isRead: false }, { $set: { isRead: true } })
+      .exec();
     return { message: 'All notifications marked as read' };
   }
 }

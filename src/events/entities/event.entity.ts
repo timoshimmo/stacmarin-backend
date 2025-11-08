@@ -41,6 +41,12 @@ export class Event extends Document {
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   createdBy: User;
+
+  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }] })
+  attendees: User[];
+
+  @Prop({ default: false })
+  reminderSent: boolean;
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

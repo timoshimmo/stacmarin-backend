@@ -2,7 +2,12 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/entities/user.entity';
 
-export type NotificationType = 'task' | 'kudos' | 'system' | 'mention';
+export type NotificationType =
+  | 'task'
+  | 'kudos'
+  | 'system'
+  | 'mention'
+  | 'event';
 
 @Schema({
   timestamps: { updatedAt: false },
@@ -22,7 +27,7 @@ export class Notification extends Document {
 
   @Prop({
     type: String,
-    enum: ['task', 'kudos', 'system', 'mention'],
+    enum: ['task', 'kudos', 'system', 'mention', 'event'],
     default: 'system',
   })
   type: NotificationType;

@@ -30,4 +30,24 @@ export class EventsService {
       .sort({ start: 'asc' })
       .exec();
   }
+
+  async findEventsDueSoon(): Promise<EventDocument[]> {
+    const now = new Date();
+    const twentyFourHoursFromNow = new Date(
+      now.getTime() + 24 * 60 * 60 * 1000,
+    );
+    return this.eventModel
+      .find({
+        start: { $gte: now, $lte: twentyFourHoursFromNow },
+        reminderSent: false,
+      })
+      .populate('attendees')
+      .exec();
+  }
+
+  async markReminderAsSent(eventId: string): Promise<void> {
+    await this.eventModel
+      .updateOne({ _id: eventId }, { $set: { reminderSent: true } })
+      .exec();
+  }
 }

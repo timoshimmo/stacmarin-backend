@@ -4,6 +4,8 @@ import {
   IsOptional,
   IsEnum,
   IsDateString,
+  IsArray,
+  IsMongoId,
 } from 'class-validator';
 import * as eventEntity from '../entities/event.entity';
 
@@ -27,4 +29,9 @@ export class CreateEventDto {
   @IsEnum(['Workshop', 'Social', 'Holiday', 'Meeting'])
   @IsNotEmpty()
   category: eventEntity.EventCategory;
+
+  @IsArray()
+  @IsMongoId({ each: true })
+  @IsOptional()
+  attendeeIds?: string[];
 }
