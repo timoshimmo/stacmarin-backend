@@ -110,6 +110,7 @@ export class TasksService {
     return task;
   }
 
+  /*
   async update(
     id: string,
     updateTaskDto: UpdateTaskDto,
@@ -130,6 +131,60 @@ export class TasksService {
     const savedTask = await task.save();
 
     if ('status' in updateTaskDto && updateTaskDto.status !== originalStatus) {
+      if (savedTask.assignees) {
+        for (const assignee of savedTask.assignees) {
+          if (assignee.id.toString() !== user.id) {
+            await this.notificationsService.create({
+              user: assignee,
+              type: 'task',
+              message: `${user.name} changed the status of "${savedTask.title}" to ${savedTask.status}.`,
+            });
+          }
+        }
+      }
+    }
+
+    return this.taskModel
+      .findById(savedTask.id)
+      .populate('owner assignees')
+      .exec();
+  }
+*/
+
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    user: User,
+  ): Promise<Task | null> {
+    const task = await this.findOne(id, user.id);
+    const originalStatus = task.status;
+
+    if (updateTaskDto.assigneeIds) {
+      task.assignees = await this.usersService.findByIds(
+        updateTaskDto.assigneeIds,
+      );
+    }
+
+    // Explicitly set fields to ensure Mongoose tracks changes correctly
+    if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
+    if (updateTaskDto.description !== undefined)
+      task.description = updateTaskDto.description;
+    if (updateTaskDto.status !== undefined) task.status = updateTaskDto.status;
+    if (updateTaskDto.priority !== undefined)
+      task.priority = updateTaskDto.priority;
+    if (updateTaskDto.dueDate !== undefined)
+      task.dueDate = new Date(updateTaskDto.dueDate);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    if (updateTaskDto.attachments !== undefined)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      task.attachments = updateTaskDto.attachments;
+
+    const savedTask = await task.save();
+
+    if (
+      updateTaskDto.status !== undefined &&
+      updateTaskDto.status !== originalStatus
+    ) {
       if (savedTask.assignees) {
         for (const assignee of savedTask.assignees) {
           if (assignee.id.toString() !== user.id) {
