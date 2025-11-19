@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 // FIX: Import UserDocument for correct Mongoose document typing.
 import { User, UserDocument } from './entities/user.entity';
 
@@ -32,9 +33,24 @@ export class UsersService {
   }
 
   // FIX: Change return type to UserDocument.
-  async create(createUserDto: Partial<User>): Promise<UserDocument> {
+  /*async create(createUserDto: Partial<User>): Promise<UserDocument> {
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
+  }
+*/
+  async create(createUserDto: Partial<User>): Promise<UserDocument> {
+    if (createUserDto.password) {
+      const salt = await bcrypt.genSalt();
+
+      createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
+    }
+    const createdUser = new this.userModel(createUserDto);
+    return createdUser.save();
+  }
+
+  async remove(id: string): Promise<{ message: string }> {
+    await this.userModel.deleteOne({ _id: id }).exec();
+    return { message: `User with ID "${id}" has been removed` };
   }
 
   // FIX: Change return type to UserDocument[].
