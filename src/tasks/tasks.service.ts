@@ -174,7 +174,7 @@ export class TasksService {
       task.priority = updateTaskDto.priority;
     if (updateTaskDto.dueDate !== undefined)
       task.dueDate = new Date(updateTaskDto.dueDate);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     if (updateTaskDto.attachments !== undefined)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       task.attachments = updateTaskDto.attachments;

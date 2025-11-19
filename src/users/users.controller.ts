@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
@@ -14,6 +15,7 @@ import { UsersService } from './users.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -31,6 +33,14 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Patch(':id')
+  @Roles(UserRole.ADMIN)
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.usersService.update(id, updateUserDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

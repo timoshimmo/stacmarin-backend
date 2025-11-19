@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 // FIX: Import UserDocument for correct Mongoose document typing.
 import { User, UserDocument } from './entities/user.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -18,11 +19,6 @@ export class UsersService {
   }
 
   // FIX: Change return type to UserDocument.
-  /*async findOneByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
-  }*/
-
-  // FIX: Change return type to UserDocument.
   async findOne(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
   }
@@ -31,13 +27,6 @@ export class UsersService {
   async findByIds(ids: string[]): Promise<UserDocument[]> {
     return this.userModel.find({ _id: { $in: ids } }).exec();
   }
-
-  // FIX: Change return type to UserDocument.
-  /*async create(createUserDto: Partial<User>): Promise<UserDocument> {
-    const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
-  }
-*/
   async create(createUserDto: Partial<User>): Promise<UserDocument> {
     if (createUserDto.password) {
       const salt = await bcrypt.genSalt();
@@ -46,6 +35,29 @@ export class UsersService {
     }
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
+  }
+
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserDocument> {
+    const updates = { ...updateUserDto };
+
+    if (updates.password) {
+      const salt = await bcrypt.genSalt();
+      updates.password = await bcrypt.hash(updates.password, salt);
+    } else {
+      delete updates.password;
+    }
+
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(id, updates, { new: true })
+      .exec();
+    if (!updatedUser) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      throw new NotFoundException(`User with ID "${id}" not found`);
+    }
+    return updatedUser;
   }
 
   async remove(id: string): Promise<{ message: string }> {
