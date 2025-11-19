@@ -5,6 +5,26 @@ import { User } from '../../users/entities/user.entity';
 export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 
+@Schema()
+export class Attachment {
+  @Prop()
+  id: string;
+
+  @Prop()
+  fileName: string;
+
+  @Prop()
+  url: string;
+
+  @Prop()
+  size: number;
+
+  @Prop()
+  mimetype: string;
+}
+
+export const AttachmentSchema = SchemaFactory.createForClass(Attachment);
+
 @Schema({
   timestamps: true,
   toJSON: {
@@ -52,6 +72,9 @@ export class Task extends Document {
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }] })
   assignees: User[];
+
+  @Prop({ type: [AttachmentSchema], default: [] })
+  attachments: Attachment[];
 
   // @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Task' }] })
   // dependsOn: Task[];
