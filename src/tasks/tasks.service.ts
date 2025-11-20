@@ -89,6 +89,13 @@ export class TasksService {
       .exec();
   }
 
+  // Method for global analytics (all completed tasks)
+  async findAllGlobalCompletedTasks(): Promise<Task[]> {
+    return this.taskModel.find({
+      $or: [{ status: 'Done' }, { isArchived: true }]
+    }).select('title status isArchived createdAt updatedAt').exec();
+  }
+
   // FIX: Change return type to TaskDocument to ensure methods like .save() and properties like ._id are available.
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
@@ -109,47 +116,6 @@ export class TasksService {
     }
     return task;
   }
-
-  /*
-  async update(
-    id: string,
-    updateTaskDto: UpdateTaskDto,
-    user: User,
-  ): Promise<Task | null> {
-    const task = await this.findOne(id, user.id);
-    const originalStatus = task.status;
-
-    if (updateTaskDto.assigneeIds) {
-      task.assignees = await this.usersService.findByIds(
-        updateTaskDto.assigneeIds,
-      );
-      delete updateTaskDto.assigneeIds;
-    }
-
-    Object.assign(task, updateTaskDto);
-
-    const savedTask = await task.save();
-
-    if ('status' in updateTaskDto && updateTaskDto.status !== originalStatus) {
-      if (savedTask.assignees) {
-        for (const assignee of savedTask.assignees) {
-          if (assignee.id.toString() !== user.id) {
-            await this.notificationsService.create({
-              user: assignee,
-              type: 'task',
-              message: `${user.name} changed the status of "${savedTask.title}" to ${savedTask.status}.`,
-            });
-          }
-        }
-      }
-    }
-
-    return this.taskModel
-      .findById(savedTask.id)
-      .populate('owner assignees')
-      .exec();
-  }
-*/
 
   async update(
     id: string,

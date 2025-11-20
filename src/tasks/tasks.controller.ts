@@ -38,6 +38,11 @@ export class TasksController {
     return this.tasksService.findAllArchivedForUser(user.id);
   }
 
+  @Get('analytics')
+  getAnalytics() {
+    return this.tasksService.findAllGlobalCompletedTasks();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @GetUser() user: User) {
     return this.tasksService.findOne(id, user.id);
