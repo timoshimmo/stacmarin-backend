@@ -91,9 +91,12 @@ export class TasksService {
 
   // Method for global analytics (all completed tasks)
   async findAllGlobalCompletedTasks(): Promise<Task[]> {
-    return this.taskModel.find({
-      $or: [{ status: 'Done' }, { isArchived: true }]
-    }).select('title status isArchived createdAt updatedAt').exec();
+    return this.taskModel
+      .find({
+        $or: [{ status: 'Done' }, { isArchived: true }],
+      })
+      .select('title status isArchived createdAt updatedAt')
+      .exec();
   }
 
   // FIX: Change return type to TaskDocument to ensure methods like .save() and properties like ._id are available.
