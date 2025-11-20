@@ -5,10 +5,17 @@ import { v2 } from 'cloudinary';
 export class CloudinaryService {
   async uploadImage(file: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      v2.uploader.upload(file, { folder: 'stacconnect/avatars' }, (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
-      });
+      void v2.uploader.upload(
+        file,
+        { folder: 'stacconnect/avatars' },
+        (error, result) => {
+          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+          if (error) return reject(error);
+          if (result !== undefined) {
+            resolve(result.secure_url);
+          }
+        },
+      );
     });
   }
 }
