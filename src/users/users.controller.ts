@@ -21,6 +21,24 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  updateSelf(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(user.id, updateUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getProfile(@GetUser() user: User) {
+    return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('directory')
+  getDirectory() {
+    return this.usersService.findAll();
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   @Roles(UserRole.ADMIN)
@@ -43,28 +61,10 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch('me')
-  updateSelf(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(user.id, updateUserDto);
-  }
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  getProfile(@GetUser() user: User) {
-    return user;
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('directory')
-  getDirectory() {
-    return this.usersService.findAll();
   }
 }
