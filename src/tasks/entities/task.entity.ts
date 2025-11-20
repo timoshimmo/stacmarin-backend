@@ -76,6 +76,8 @@ export class Task extends Document {
   @Prop({ type: [AttachmentSchema], default: [] })
   attachments: Attachment[];
 
+  createdAt: Date;
+  updatedAt: Date;
   // @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Task' }] })
   // dependsOn: Task[];
 }
