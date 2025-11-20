@@ -43,6 +43,12 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  updateSelf(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(user.id, updateUserDto);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(':id')
   @Roles(UserRole.ADMIN)

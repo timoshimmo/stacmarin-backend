@@ -8,6 +8,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { NotesModule } from './notes/notes.module';
 import { EventsModule } from './events/events.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotesModule,
     NotificationsModule,
     EventsModule,
+    CloudinaryModule,
   ],
   controllers: [],
   providers: [],

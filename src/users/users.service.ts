@@ -5,12 +5,14 @@ import * as bcrypt from 'bcrypt';
 // FIX: Import UserDocument for correct Mongoose document typing.
 import { User, UserDocument } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     // FIX: Use UserDocument for the injected model type.
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   // FIX: Change return type to UserDocument.
@@ -30,9 +32,15 @@ export class UsersService {
   async create(createUserDto: Partial<User>): Promise<UserDocument> {
     if (createUserDto.password) {
       const salt = await bcrypt.genSalt();
-
       createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
     }
+
+    if (createUserDto.avatar && createUserDto.avatar.startsWith('data:image')) {
+      createUserDto.avatar = await this.cloudinaryService.uploadImage(
+        createUserDto.avatar,
+      );
+    }
+
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
   }
@@ -48,6 +56,11 @@ export class UsersService {
       updates.password = await bcrypt.hash(updates.password, salt);
     } else {
       delete updates.password;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    if (updates.avatar && updates.avatar.startsWith('data:image')) {
+      updates.avatar = await this.cloudinaryService.uploadImage(updates.avatar);
     }
 
     const updatedUser = await this.userModel
