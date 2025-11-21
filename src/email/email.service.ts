@@ -8,6 +8,7 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
   constructor(private configService: ConfigService) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('SMTP_HOST'),
       port: this.configService.get<number>('SMTP_PORT'),
@@ -34,7 +35,13 @@ export class EmailService {
     await this.sendMail(email, subject, html);
   }
 
-  async sendTaskAssignmentEmail(email: string, taskTitle: string, assignerName: string, taskId: string) {
+  async sendTaskAssignmentEmail(
+    email: string,
+    taskTitle: string,
+    assignerName: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    taskId: string,
+  ) {
     const subject = `New Task Assigned: ${taskTitle}`;
     const html = `
       <div style="font-family: Arial, sans-serif; color: #333;">
@@ -51,15 +58,21 @@ export class EmailService {
   }
 
   private async sendMail(to: string, subject: string, html: string) {
-    const from = this.configService.get<string>('SMTP_FROM', '"StacConnect" <no-reply@stacconnect.com>');
-    
+    const from = this.configService.get<string>(
+      'SMTP_FROM',
+      // eslint-disable-next-line prettier/prettier
+      '"StacConnect" <no-reply@stacconnect.com>'
+    );
+
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const info = await this.transporter.sendMail({
         from,
         to,
         subject,
         html,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       this.logger.log(`Email sent to ${to}: ${info.messageId}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}:`, error);
