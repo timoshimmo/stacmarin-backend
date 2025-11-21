@@ -9,6 +9,7 @@ import { NotesModule } from './notes/notes.module';
 import { EventsModule } from './events/events.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     NotificationsModule,
     EventsModule,
     CloudinaryModule,
+    EmailModule,
   ],
   controllers: [],
   providers: [],

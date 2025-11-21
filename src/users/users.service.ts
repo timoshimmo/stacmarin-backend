@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,7 @@ export class UsersService {
     // FIX: Use UserDocument for the injected model type.
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private cloudinaryService: CloudinaryService,
+    private emailService: EmailService,
   ) {}
 
   // FIX: Change return type to UserDocument.
@@ -42,7 +44,12 @@ export class UsersService {
     }
 
     const createdUser = new this.userModel(createUserDto);
-    return createdUser.save();
+    const savedUser = await createdUser.save();
+
+    // Send welcome email asynchronously
+    await this.emailService.sendWelcomeEmail(savedUser.email, savedUser.name);
+
+    return savedUser;
   }
 
   async update(
@@ -58,7 +65,6 @@ export class UsersService {
       delete updates.password;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     if (updates.avatar && updates.avatar.startsWith('data:image')) {
       updates.avatar = await this.cloudinaryService.uploadImage(updates.avatar);
     }
@@ -67,7 +73,6 @@ export class UsersService {
       .findByIdAndUpdate(id, updates, { new: true })
       .exec();
     if (!updatedUser) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
     return updatedUser;

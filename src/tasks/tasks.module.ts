@@ -6,12 +6,14 @@ import { Task, TaskSchema } from './entities/task.entity';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TasksScheduler } from './tasks.scheduler';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]), 
-    UsersModule, 
-    NotificationsModule
+    MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
+    UsersModule,
+    NotificationsModule,
+    EmailModule,
   ],
   controllers: [TasksController],
   providers: [TasksService, TasksScheduler],

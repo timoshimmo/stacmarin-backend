@@ -13,6 +13,7 @@ import { Task, TaskDocument } from './entities/task.entity';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class TasksService {
@@ -21,6 +22,7 @@ export class TasksService {
     @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
@@ -57,6 +59,17 @@ export class TasksService {
           type: 'task',
           message: `${user.name} assigned you a new task: "${savedTask.title}"`,
         });
+
+        // Email notification
+        if (assignee.email) {
+          await this.emailService.sendTaskAssignmentEmail(
+            assignee.email,
+            savedTask.title,
+            user.name,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+            savedTask.id,
+          );
+        }
       }
     }
 
