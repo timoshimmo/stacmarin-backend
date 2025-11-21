@@ -60,16 +60,18 @@ export class TasksService {
           message: `${user.name} assigned you a new task: "${savedTask.title}"`,
         });
 
-        // Email notification assignee.email
-        if (assignee.email) {
-          void this.emailService.sendTaskAssignmentEmail(
-            'tokmangwang@gmail.com',
-            savedTask.title,
-            user.name,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            savedTask.id,
-          );
-        }
+        console.log(`ASSIGNEE EMAIL: ${assignee.email}`);
+
+        // Email notification
+        //if (assignee.email) {
+        void this.emailService.sendTaskAssignmentEmail(
+          'tokmangwang@gmail.com',
+          savedTask.title,
+          user.name,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          savedTask.id,
+        );
+        //}
       }
     }
 
