@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 // FIX: Import TaskDocument to use for Mongoose model and document typing.
@@ -185,6 +185,55 @@ export class TasksService {
     return this.taskModel
       .findById(savedTask.id)
       .populate('owner assignees')
+      .exec();
+  }
+
+  async addComment(
+    taskId: string,
+    content: string,
+    user: User,
+  ): Promise<Task | null> {
+    const task = await this.taskModel.findById(taskId).exec();
+    if (!task) throw new NotFoundException('Task not found');
+
+    const comment = {
+      id: new Types.ObjectId().toString(),
+      content,
+      author: user,
+      timestamp: new Date(),
+    };
+
+    task.comments.push(comment);
+    await task.save();
+
+    // Handle Mentions
+    // Regex to find @Name patterns. Assumes names don't have spaces for simplicity, or use strict matching against user list
+    const allUsers = await this.usersService.findAll();
+    const mentions = content.match(/@([\w\s]+)/g);
+
+    if (mentions) {
+      for (const mention of mentions) {
+        const nameToFind = mention.substring(1).trim(); // Remove @
+        // Find user with this name (case insensitive partial match)
+        const mentionedUser = allUsers.find(
+          // eslint-disable-next-line prettier/prettier
+          (u) => u.name.toLowerCase() === nameToFind.toLowerCase()
+        );
+
+        if (mentionedUser && mentionedUser.id !== user.id) {
+          await this.notificationsService.create({
+            user: mentionedUser,
+            type: 'mention',
+            message: `${user.name} mentioned you in a comment on "${task.title}"`,
+          });
+          // Optional: Send Email for mention
+        }
+      }
+    }
+
+    return this.taskModel
+      .findById(taskId)
+      .populate('owner assignees comments.author')
       .exec();
   }
 

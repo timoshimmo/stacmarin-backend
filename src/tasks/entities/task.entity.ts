@@ -25,6 +25,23 @@ export class Attachment {
 
 export const AttachmentSchema = SchemaFactory.createForClass(Attachment);
 
+@Schema()
+export class Comment {
+  @Prop()
+  id: string;
+
+  @Prop({ required: true })
+  content: string;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  author: User;
+
+  @Prop({ default: Date.now })
+  timestamp: Date;
+}
+
+export const CommentSchema = SchemaFactory.createForClass(Comment);
+
 @Schema({
   timestamps: true,
   toJSON: {
@@ -75,6 +92,9 @@ export class Task extends Document {
 
   @Prop({ type: [AttachmentSchema], default: [] })
   attachments: Attachment[];
+
+  @Prop({ type: [CommentSchema], default: [] })
+  comments: Comment[];
 
   createdAt: Date;
   updatedAt: Date;

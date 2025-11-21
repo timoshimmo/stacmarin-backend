@@ -57,6 +57,15 @@ export class TasksController {
     return this.tasksService.update(id, updateTaskDto, user);
   }
 
+  @Post(':id/comments')
+  addComment(
+    @Param('id') id: string,
+    @Body('content') content: string,
+    @GetUser() user: User,
+  ) {
+    return this.tasksService.addComment(id, content, user);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string, @GetUser() user: User) {
     return this.tasksService.remove(id, user);
