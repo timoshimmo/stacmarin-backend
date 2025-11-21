@@ -8,14 +8,35 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
   constructor(private configService: ConfigService) {
+    // Parse environment variables
+    const smtpHost = this.configService.get<string>('SMTP_HOST');
+    const smtpPort = this.configService.get<number>('SMTP_PORT');
+    const smtpUser = this.configService.get<string>('SMTP_USER');
+    const smtpPass = this.configService.get<string>('SMTP_PASS');
+
+    // Robustly handle the boolean configuration.
+    // Env vars are strings, so "false" becomes true in a boolean check if not parsed.
+    const smtpSecureRaw = this.configService.get<string>('SMTP_SECURE');
+    const isSecure =
+      smtpSecureRaw === 'true' ||
+      (smtpPort === 465 && smtpSecureRaw !== 'false');
+
+    this.logger.log(
+      `Configuring SMTP: Host=${smtpHost}, Port=${smtpPort}, Secure=${isSecure}`,
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST'),
-      port: this.configService.get<number>('SMTP_PORT'),
-      secure: false, // true for 465, false for other ports
+      host: smtpHost,
+      port: smtpPort,
+      secure: isSecure, // true for 465, false for other ports (587)
       auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASS'),
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      tls: {
+        // Helps avoid issues with self-signed certificates in development
+        rejectUnauthorized: false,
       },
     });
   }
