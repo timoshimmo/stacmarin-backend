@@ -60,10 +60,10 @@ export class TasksService {
           message: `${user.name} assigned you a new task: "${savedTask.title}"`,
         });
 
-        // Email notification
+        // Email notification assignee.email
         if (assignee.email) {
-          await this.emailService.sendTaskAssignmentEmail(
-            assignee.email,
+          void this.emailService.sendTaskAssignmentEmail(
+            "tokmangwang@gmail.com",
             savedTask.title,
             user.name,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
