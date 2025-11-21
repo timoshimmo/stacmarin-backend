@@ -188,6 +188,7 @@ export class TasksService {
       .exec();
   }
 
+  /*
   async addComment(
     taskId: string,
     content: string,
@@ -230,7 +231,59 @@ export class TasksService {
         }
       }
     }
+  
+    return this.taskModel
+      .findById(taskId)
+      .populate('owner assignees comments.author')
+      .exec();
+  }
 
+  */
+
+  async addComment(
+    taskId: string,
+    content: string,
+    user: User,
+  ): Promise<Task | null> {
+    const task = await this.taskModel.findById(taskId).exec();
+    if (!task) throw new NotFoundException('Task not found');
+
+    // Ensure we use the correct ID string
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    const authorId = user.id || (user as any)._id?.toString();
+
+    const comment = {
+      id: new Types.ObjectId().toString(),
+      content,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      author: authorId, // Save as ID, not object, to prevent CastError
+      timestamp: new Date(),
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    task.comments.push(comment as any);
+    await task.save();
+
+    // Handle Mentions
+    const allUsers = await this.usersService.findAll();
+    const mentions = content.match(/@([\w\s]+)/g);
+
+    if (mentions) {
+      for (const mention of mentions) {
+        const nameToFind = mention.substring(1).trim(); // Remove @
+        // eslint-disable-next-line prettier/prettier
+        const mentionedUser = allUsers.find(u => u.name.toLowerCase() === nameToFind.toLowerCase());
+        if (mentionedUser && mentionedUser.id !== user.id) {
+          await this.notificationsService.create({
+            user: mentionedUser,
+            type: 'mention',
+            message: `${user.name} mentioned you in a comment on "${task.title}"`,
+          });
+        }
+      }
+    }
+
+    // Return fully populated task so frontend gets user details immediately
     return this.taskModel
       .findById(taskId)
       .populate('owner assignees comments.author')
