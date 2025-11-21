@@ -63,7 +63,7 @@ export class TasksService {
         // Email notification assignee.email
         if (assignee.email) {
           void this.emailService.sendTaskAssignmentEmail(
-            "tokmangwang@gmail.com",
+            'tokmangwang@gmail.com',
             savedTask.title,
             user.name,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
