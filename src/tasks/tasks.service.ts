@@ -60,11 +60,11 @@ export class TasksService {
           message: `${user.name} assigned you a new task: "${savedTask.title}"`,
         });
 
-       // console.log(`ASSIGNEE EMAIL: ${assignee.email}`);
+        // console.log(`ASSIGNEE EMAIL: ${assignee.email}`);
 
         // Email notification
         //if (assignee.email) {
-        void this.emailService.sendTaskAssignmentEmail(
+        await this.emailService.sendTaskAssignmentEmail(
           'tokmangwang@gmail.com',
           savedTask.title,
           user.name,
