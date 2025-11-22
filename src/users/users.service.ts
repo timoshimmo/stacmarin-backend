@@ -47,6 +47,9 @@ export class UsersService {
     const savedUser = await createdUser.save();
 
     // Send welcome email asynchronously
+    //await this.emailService.sendWelcomeEmail(savedUser.email, savedUser.name);
+    // IMPORTANT: Await the email send for serverless environments (Vercel).
+    // Without 'await', the function may freeze/terminate before the email is sent.
     await this.emailService.sendWelcomeEmail(savedUser.email, savedUser.name);
 
     return savedUser;

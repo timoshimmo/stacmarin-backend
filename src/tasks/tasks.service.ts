@@ -50,6 +50,9 @@ export class TasksService {
 
     const savedTask = await createdTask.save();
 
+    // Collect email promises to await them all at the end
+    const emailPromises: Promise<any>[] = [];
+
     // Create notifications for assignees, but don't notify the creator if they assigned it to themselves.
     for (const assignee of assignees) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -64,16 +67,22 @@ export class TasksService {
 
         // Email notification
         if (assignee.email) {
-          void this.emailService.sendTaskAssignmentEmail(
-            assignee.email,
-            savedTask.title,
-            user.name,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            savedTask.id,
+          emailPromises.push(
+            this.emailService.sendTaskAssignmentEmail(
+              assignee.email,
+              savedTask.title,
+              user.name,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+              savedTask.id,
+            ),
           );
         }
       }
     }
+
+    // Wait for all emails to be sent.
+    // Using Promise.allSettled allows successful emails to pass even if one fails.
+    await Promise.allSettled(emailPromises);
 
     // Find the newly created task by its ID and populate the 'owner' and 'assignees' fields before returning it.
     return this.taskModel
