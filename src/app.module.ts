@@ -10,6 +10,7 @@ import { EventsModule } from './events/events.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmailModule } from './email/email.module';
+import { DepartmentsModule } from './departments/departments.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { EmailModule } from './email/email.module';
     EventsModule,
     CloudinaryModule,
     EmailModule,
+    DepartmentsModule,
   ],
   controllers: [],
   providers: [],
