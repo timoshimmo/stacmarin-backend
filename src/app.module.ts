@@ -11,6 +11,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmailModule } from './email/email.module';
 import { DepartmentsModule } from './departments/departments.module';
+import { WellnessModule } from './wellness/wellness.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DepartmentsModule } from './departments/departments.module';
     CloudinaryModule,
     EmailModule,
     DepartmentsModule,
+    WellnessModule,
   ],
   controllers: [],
   providers: [],
