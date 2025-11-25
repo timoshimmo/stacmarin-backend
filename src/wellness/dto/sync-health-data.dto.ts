@@ -29,6 +29,18 @@ export class SyncHealthDataDto {
   @IsOptional()
   stairsClimbed?: number;
 
+  @IsNumber()
+  @IsOptional()
+  runningDistance?: number;
+
+  @IsNumber()
+  @IsOptional()
+  cyclingDistance?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tennisDuration?: number;
+
   @IsEnum(['AppleHealth', 'GoogleFit', 'Manual'])
   source: healthDataEntity.HealthSource;
 }

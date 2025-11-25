@@ -44,6 +44,15 @@ export class HealthData extends Document {
   @Prop({ default: 0 })
   stairsClimbed: number;
 
+  @Prop({ default: 0 })
+  runningDistance: number; // in km
+
+  @Prop({ default: 0 })
+  cyclingDistance: number; // in km
+
+  @Prop({ default: 0 })
+  tennisDuration: number; // in minutes
+
   @Prop({
     type: String,
     enum: ['AppleHealth', 'GoogleFit', 'Manual'],
