@@ -25,6 +25,10 @@ export class SyncHealthDataDto {
   @IsOptional()
   heartRateAvg?: number;
 
+  @IsNumber()
+  @IsOptional()
+  stairsClimbed?: number;
+
   @IsEnum(['AppleHealth', 'GoogleFit', 'Manual'])
   source: healthDataEntity.HealthSource;
 }

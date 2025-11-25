@@ -41,6 +41,9 @@ export class HealthData extends Document {
   @Prop({ default: 0 })
   heartRateAvg: number;
 
+  @Prop({ default: 0 })
+  stairsClimbed: number;
+
   @Prop({
     type: String,
     enum: ['AppleHealth', 'GoogleFit', 'Manual'],
