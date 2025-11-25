@@ -1,6 +1,5 @@
-
-import { IsDateString, IsNumber, IsOptional, IsEnum, IsString } from 'class-validator';
-import { HealthSource } from '../entities/health-data.entity';
+import { IsDateString, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import * as healthDataEntity from '../entities/health-data.entity';
 
 export class SyncHealthDataDto {
   @IsDateString()
@@ -27,5 +26,5 @@ export class SyncHealthDataDto {
   heartRateAvg?: number;
 
   @IsEnum(['AppleHealth', 'GoogleFit', 'Manual'])
-  source: HealthSource;
+  source: healthDataEntity.HealthSource;
 }

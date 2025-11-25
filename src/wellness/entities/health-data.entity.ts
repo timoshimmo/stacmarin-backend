@@ -1,23 +1,24 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/entities/user.entity';
 
 export type HealthSource = 'AppleHealth' | 'GoogleFit' | 'Manual';
 
-@Schema({ 
+@Schema({
   timestamps: true,
   toJSON: {
     virtuals: true,
-    transform: (doc, ret) => {
+    transform: (doc, ret: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       delete ret._id;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       delete ret.__v;
     },
   },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
 })
 export class HealthData extends Document {
-  id: string;
+  declare id: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   user: User;
@@ -40,10 +41,10 @@ export class HealthData extends Document {
   @Prop({ default: 0 })
   heartRateAvg: number;
 
-  @Prop({ 
-    type: String, 
-    enum: ['AppleHealth', 'GoogleFit', 'Manual'], 
-    default: 'Manual' 
+  @Prop({
+    type: String,
+    enum: ['AppleHealth', 'GoogleFit', 'Manual'],
+    default: 'Manual',
   })
   source: HealthSource;
 }
