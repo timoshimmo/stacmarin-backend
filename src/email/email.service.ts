@@ -26,6 +26,12 @@ export class EmailService {
       `Configuring SMTP: Host=${smtpHost}, Port=${smtpPort}, Secure=${isSecure}`,
     );
 
+    // Default to the vercel app url if not provided
+    this.frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'https://stacmarine-webapp.vercel.app/#',
+    );
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.transporter = nodemailer.createTransport({
       host: smtpHost,
@@ -115,7 +121,7 @@ export class EmailService {
     const from = this.configService.get<string>(
       'SMTP_FROM',
       // eslint-disable-next-line prettier/prettier
-      '"StacConnect" <no-reply@stacconnect.com>'
+      '"StacConnect" <StacConnect@gmail.com>'
     );
 
     try {
