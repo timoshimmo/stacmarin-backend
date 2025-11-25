@@ -57,6 +57,12 @@ export class TasksController {
     return this.tasksService.update(id, updateTaskDto, user);
   }
 
+  @Post(':id/reminders')
+  @HttpCode(HttpStatus.OK)
+  sendReminders(@Param('id') id: string, @GetUser() user: User) {
+    return this.tasksService.sendManualReminder(id, user);
+  }
+
   @Post(':id/comments')
   addComment(
     @Param('id') id: string,

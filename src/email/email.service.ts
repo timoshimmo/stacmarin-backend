@@ -6,6 +6,7 @@ import * as nodemailer from 'nodemailer';
 export class EmailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(EmailService.name);
+  private readonly frontendUrl: string;
 
   constructor(private configService: ConfigService) {
     // Parse environment variables
@@ -44,10 +45,14 @@ export class EmailService {
   async sendWelcomeEmail(email: string, name: string) {
     const subject = 'Welcome to StacConnect!';
     const html = `
-      <div style="font-family: Arial, sans-serif; color: #333;">
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
         <h2>Welcome to StacConnect, ${name}!</h2>
         <p>We are excited to have you on board.</p>
         <p>Your account has been successfully created. You can now log in to access your digital workspace.</p>
+        <br/>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${this.frontendUrl}/login" style="background-color: #39bc3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Login to StacConnect</a>
+        </div>
         <br/>
         <p>Best regards,</p>
         <p>The StacConnect Team</p>
@@ -65,11 +70,39 @@ export class EmailService {
   ) {
     const subject = `New Task Assigned: ${taskTitle}`;
     const html = `
-      <div style="font-family: Arial, sans-serif; color: #333;">
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
         <h2>New Task Assignment</h2>
         <p>Hello,</p>
         <p><strong>${assignerName}</strong> has assigned you a new task: <strong>${taskTitle}</strong>.</p>
         <p>Please log in to your dashboard to view details and start working on it.</p>
+        <br/>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${this.frontendUrl}/tasks" style="background-color: #39bc3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Task</a>
+        </div>
+        <br/>
+        <p>Best regards,</p>
+        <p>The StacConnect Team</p>
+      </div>
+    `;
+    await this.sendMail(email, subject, html);
+  }
+
+  async sendTaskReminderEmail(
+    email: string,
+    taskTitle: string,
+    requesterName: string,
+  ) {
+    const subject = `Reminder: ${taskTitle}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #f59e0b;">Task Reminder</h2>
+        <p>Hello,</p>
+        <p>This is a gentle reminder regarding the task: <strong>${taskTitle}</strong>.</p>
+        <p><strong>${requesterName}</strong> has requested that you check the status and due date of this task.</p>
+        <br/>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${this.frontendUrl}/tasks" style="background-color: #39bc3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Task in Dashboard</a>
+        </div>
         <br/>
         <p>Best regards,</p>
         <p>The StacConnect Team</p>

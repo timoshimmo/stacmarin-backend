@@ -299,6 +299,42 @@ export class TasksService {
       .exec();
   }
 
+  async sendManualReminder(
+    id: string,
+    user: User,
+  ): Promise<{ message: string }> {
+    const task = await this.findOne(id, user.id);
+
+    if (!task.assignees || task.assignees.length === 0) {
+      throw new BadRequestException('No assignees to remind.');
+    }
+
+    const emailPromises: Promise<any>[] = [];
+
+    for (const assignee of task.assignees) {
+      // Create notification
+      await this.notificationsService.create({
+        user: assignee,
+        type: 'task',
+        message: `Reminder: Please check task "${task.title}". Sent by ${user.name}.`,
+      });
+
+      // Send email
+      if (assignee.email) {
+        emailPromises.push(
+          this.emailService.sendTaskReminderEmail(
+            assignee.email,
+            task.title,
+            user.name,
+          ),
+        );
+      }
+    }
+
+    await Promise.allSettled(emailPromises);
+    return { message: 'Reminders sent successfully.' };
+  }
+
   async remove(id: string, user: User): Promise<{ message: string }> {
     const task = await this.findOne(id, user.id);
     await this.taskModel.deleteOne({ _id: task._id }).exec();
