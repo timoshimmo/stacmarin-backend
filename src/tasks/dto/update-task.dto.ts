@@ -17,7 +17,7 @@ export class UpdateTaskDto {
   @IsOptional()
   description?: string;
 
-  @IsEnum(['To Do', 'In Progress', 'Done'])
+  @IsEnum(['Open', 'Active', 'Closed'])
   @IsOptional()
   status?: taskEntity.TaskStatus;
 

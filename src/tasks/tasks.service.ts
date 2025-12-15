@@ -117,7 +117,7 @@ export class TasksService {
   async findAllGlobalCompletedTasks(): Promise<Task[]> {
     return this.taskModel
       .find({
-        $or: [{ status: 'Done' }, { isArchived: true }],
+        $or: [{ status: 'Closed' }, { isArchived: true }],
       })
       .select('title status isArchived createdAt updatedAt')
       .exec();
@@ -343,8 +343,8 @@ export class TasksService {
 
   async archiveTask(id: string, user: User): Promise<Task> {
     const task = await this.findOne(id, user.id);
-    if (task.status !== 'Done') {
-      throw new BadRequestException('Only completed tasks can be archived.');
+    if (task.status !== 'Closed') {
+      throw new BadRequestException('Only closed tasks can be archived.');
     }
     task.isArchived = true;
     return task.save();
@@ -361,7 +361,7 @@ export class TasksService {
     return this.taskModel
       .find({
         dueDate: { $lt: new Date() },
-        status: { $ne: 'Done' },
+        status: { $ne: 'Closed' },
         isArchived: false,
       })
       .populate('assignees')
@@ -376,7 +376,7 @@ export class TasksService {
     return this.taskModel
       .find({
         dueDate: { $gte: now, $lte: twentyFourHoursFromNow },
-        status: { $ne: 'Done' },
+        status: { $ne: 'Closed' },
         isArchived: false,
       })
       .populate('assignees')

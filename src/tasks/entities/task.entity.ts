@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/entities/user.entity';
 
-export type TaskStatus = 'To Do' | 'In Progress' | 'Done';
+export type TaskStatus = 'Open' | 'Active' | 'Closed';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 
 @Schema()
@@ -66,8 +66,8 @@ export class Task extends Document {
 
   @Prop({
     type: String,
-    enum: ['To Do', 'In Progress', 'Done'],
-    default: 'To Do',
+    enum: ['Open', 'Active', 'Closed'],
+    default: 'Open',
   })
   status: TaskStatus;
 
