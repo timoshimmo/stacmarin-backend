@@ -38,9 +38,14 @@ export class TasksController {
     return this.tasksService.findAllArchivedForUser(user.id);
   }
 
+  @Get('closed')
+  getAllClosed() {
+    return this.tasksService.findAllGlobalCompletedTasks();
+  }
+
   @Get('analytics')
   getAnalytics() {
-    return this.tasksService.findAllGlobalCompletedTasks();
+    return this.tasksService.findAllGlobalTasks();
   }
 
   @Get(':id')

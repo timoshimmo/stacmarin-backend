@@ -123,6 +123,14 @@ export class TasksService {
       .exec();
   }
 
+  async findAllGlobalTasks(): Promise<Task[]> {
+    // Return all tasks to allow frontend to calculate Open/Active/Closed trends
+    return this.taskModel
+      .find()
+      .select('title status isArchived createdAt updatedAt')
+      .exec();
+  }
+
   // FIX: Change return type to TaskDocument to ensure methods like .save() and properties like ._id are available.
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
