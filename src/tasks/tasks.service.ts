@@ -299,6 +299,39 @@ export class TasksService {
       .exec();
   }
 
+  async findRecentComments(): Promise<any[]> {
+    return this.taskModel
+      .aggregate([
+        { $unwind: '$comments' },
+        { $sort: { 'comments.timestamp': -1 } },
+        { $limit: 20 },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'comments.author',
+            foreignField: '_id',
+            as: 'author',
+          },
+        },
+        { $unwind: { path: '$author', preserveNullAndEmptyArrays: true } },
+        {
+          $project: {
+            id: '$comments.id',
+            taskTitle: '$title',
+            taskId: '$_id',
+            content: '$comments.content',
+            author: {
+              name: '$author.name',
+              avatar: '$author.avatar',
+              id: '$author._id',
+            },
+            timestamp: '$comments.timestamp',
+          },
+        },
+      ])
+      .exec();
+  }
+
   async sendManualReminder(
     id: string,
     user: User,

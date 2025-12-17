@@ -57,6 +57,11 @@ export class TasksController {
     return this.tasksService.update(id, updateTaskDto, user);
   }
 
+  @Get('comments/recent')
+  getRecentComments() {
+    return this.tasksService.findRecentComments();
+  }
+
   @Post(':id/reminders')
   @HttpCode(HttpStatus.OK)
   sendReminders(@Param('id') id: string, @GetUser() user: User) {
