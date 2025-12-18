@@ -17,7 +17,8 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOneByEmail(email);
+    const emailVal = email.toLowerCase();
+    const user = await this.usersService.findOneByEmail(emailVal);
     if (user && (await bcrypt.compare(pass, user.password))) {
       // The schema's toObject transform removes the password automatically.
       return user.toObject();
@@ -52,9 +53,9 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    const existingUser = await this.usersService.findOneByEmail(
-      createUserDto.email,
-    );
+    const normalizedEmail = createUserDto.email.toLowerCase();
+    const existingUser =
+      await this.usersService.findOneByEmail(normalizedEmail);
     if (existingUser) {
       throw new ConflictException('Email already registered');
     }
@@ -65,6 +66,7 @@ export class AuthService {
     const user = await this.usersService.create({
       ...createUserDto,
       password: hashedPassword,
+      email: normalizedEmail,
     });
 
     // Don't return password in the response

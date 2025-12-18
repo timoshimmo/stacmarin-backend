@@ -19,7 +19,8 @@ export class UsersService {
 
   // FIX: Change return type to UserDocument.
   async findOneByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).select('+password').exec();
+    const emailVal = email.toLowerCase();
+    return this.userModel.findOne({ emailVal }).select('+password').exec();
   }
 
   // FIX: Change return type to UserDocument.
@@ -32,6 +33,10 @@ export class UsersService {
     return this.userModel.find({ _id: { $in: ids } }).exec();
   }
   async create(createUserDto: Partial<User>): Promise<UserDocument> {
+    if (createUserDto.email) {
+      createUserDto.email = createUserDto.email.toLowerCase();
+    }
+
     if (createUserDto.password) {
       const salt = await bcrypt.genSalt();
       createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
@@ -60,6 +65,10 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<UserDocument> {
     const updates = { ...updateUserDto };
+
+    if (updates.email) {
+      updates.email = updates.email.toLowerCase();
+    }
 
     if (updates.password) {
       const salt = await bcrypt.genSalt();
