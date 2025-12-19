@@ -46,7 +46,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const payload = { email: user.email, sub: user.id };
+    const payload = {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      email: user.email,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      sub: user.id || user._id.toString(),
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };
