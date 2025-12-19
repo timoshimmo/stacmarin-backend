@@ -20,7 +20,8 @@ export class UsersService {
   // FIX: Change return type to UserDocument.
   async findOneByEmail(email: string): Promise<UserDocument | null> {
     const emailVal = email.toLowerCase();
-    return this.userModel.findOne({ emailVal }).select('+password').exec();
+    console.log('User Services Email: ', emailVal);
+    return this.userModel.findOne({ email }).select('+password').exec();
   }
 
   // FIX: Change return type to UserDocument.
