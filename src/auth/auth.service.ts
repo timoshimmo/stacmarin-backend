@@ -18,7 +18,9 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     //const emailVal = email.toLowerCase();
+    console.log('Validate Credntials: ', email + ' ' + pass);
     const user = await this.usersService.findOneByEmail(email);
+    console.log('Validate User: ', user);
     if (user && (await bcrypt.compare(pass, user.password))) {
       // The schema's toObject transform removes the password automatically.
       return user.toObject();
