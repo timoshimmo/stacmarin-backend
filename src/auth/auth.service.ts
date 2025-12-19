@@ -43,6 +43,7 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user = await this.validateUser(loginDto.email, loginDto.password);
     console.log('User Data: ', user);
+    console.log('User Credntials: ', loginDto.email + ' ' + loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
