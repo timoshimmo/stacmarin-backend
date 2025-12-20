@@ -1,4 +1,3 @@
-
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateGroupDto } from './create-group.dto';
 import { IsOptional, IsArray, IsMongoId } from 'class-validator';

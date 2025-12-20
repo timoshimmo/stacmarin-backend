@@ -1,5 +1,10 @@
-
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsMongoId,
+} from 'class-validator';
 
 export class CreateGroupDto {
   @IsString()
