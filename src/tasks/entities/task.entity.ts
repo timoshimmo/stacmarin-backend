@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from '../../users/entities/user.entity';
+import { Group } from '../../groups/entities/group.entity';
 
 export type TaskStatus = 'Open' | 'Active' | 'Closed';
 export type TaskPriority = 'Low' | 'Medium' | 'High';
@@ -89,6 +90,9 @@ export class Task extends Document {
 
   @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'User' }] })
   assignees: User[];
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Group' })
+  assignedGroup: Group;
 
   @Prop({ type: [AttachmentSchema], default: [] })
   attachments: Attachment[];

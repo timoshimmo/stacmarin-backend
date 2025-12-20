@@ -34,6 +34,10 @@ export class UpdateTaskDto {
   @IsOptional()
   assigneeIds?: string[];
 
+  @IsMongoId()
+  @IsOptional()
+  assignedGroupId?: string;
+
   @IsArray()
   @IsOptional()
   attachments?: any[];

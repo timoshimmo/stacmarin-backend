@@ -25,10 +25,11 @@ export class TasksService {
     private readonly emailService: EmailService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, user: User): Promise<Task | null> {
-    const { assigneeIds, ...taskData } = createTaskDto;
+  async create(dto: CreateTaskDto, user: User): Promise<Task | null> {
+    //const { assigneeIds, ...taskData } = createTaskDto;
 
     // Determine the final list of assignee IDs for the new task.
+    /*
     let finalAssigneeIds: string[];
     if (assigneeIds && assigneeIds.length > 0) {
       finalAssigneeIds = assigneeIds;
@@ -36,23 +37,24 @@ export class TasksService {
       // If no assignees are provided, assign the task to the creator by default.
       finalAssigneeIds = [user.id];
     }
+      */
 
     // Fetch the full user documents for the assignees. This is needed for sending notifications.
-    const assignees = await this.usersService.findByIds(finalAssigneeIds);
+    // const assignees = await this.usersService.findByIds(finalAssigneeIds);
 
-    const createdTask = new this.taskModel({
+    /* const createdTask = new this.taskModel({
       ...taskData,
       // Pass the creator's ID for the owner field.
       owner: user.id,
       // Pass the array of assignee IDs. Mongoose will cast these to ObjectIds.
       assignees: finalAssigneeIds,
+      assignedGroup: dto.assignedGroupId || undefined,
     });
+    */
 
-    const savedTask = await createdTask.save();
+    //const savedTask = await createdTask.save();
 
-    // Collect email promises to await them all at the end
-    const emailPromises: Promise<any>[] = [];
-
+    /*
     // Create notifications for assignees, but don't notify the creator if they assigned it to themselves.
     for (const assignee of assignees) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -80,15 +82,83 @@ export class TasksService {
       }
     }
 
-    // Wait for all emails to be sent.
-    // Using Promise.allSettled allows successful emails to pass even if one fails.
     await Promise.allSettled(emailPromises);
 
     // Find the newly created task by its ID and populate the 'owner' and 'assignees' fields before returning it.
     return this.taskModel
+    .findById(savedTask.id)
+    .populate('owner assignees')
+    .exec();
+  */
+
+    const createdTask = new this.taskModel({
+      ...dto,
+      owner: user.id,
+      assignees: dto.assigneeIds || [user.id],
+      assignedGroup: dto.assignedGroupId || undefined,
+    });
+
+    const savedTask = await createdTask.save();
+    const task = await this.taskModel
       .findById(savedTask.id)
-      .populate('owner assignees')
+      .populate('owner assignees assignedGroup')
       .exec();
+
+    // Collect email promises to await them all at the end
+    const emailPromises: Promise<any>[] = [];
+
+    if (task !== null) {
+      if (task.assignees) {
+        for (const assignee of task.assignees) {
+          if (assignee.id.toString() !== user.id) {
+            await this.notificationsService.create({
+              user: assignee,
+              type: 'task',
+              message: `New task: "${task.title}"`,
+            });
+
+            if (assignee.email)
+              emailPromises.push(
+                this.emailService.sendTaskAssignmentEmail(
+                  assignee.email,
+                  task.title,
+                  user.name,
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                  task.id,
+                ),
+              );
+          }
+        }
+      }
+
+      // Notify group members if a group is assigned
+      if (task.assignedGroup) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const group = await (task.assignedGroup as any).populate('members');
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        for (const member of group.members) {
+          const isIndividualAssignee = task.assignees.some(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            (a) => a.id.toString() === member.id.toString(),
+          );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          if (member.id.toString() !== user.id && !isIndividualAssignee) {
+            await this.notificationsService.create({
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: member,
+              type: 'task',
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              message: `Group Task: "${task.title}" was assigned to ${group.name}`,
+            });
+          }
+        }
+      }
+    }
+
+    // Wait for all emails to be sent.
+    // Using Promise.allSettled allows successful emails to pass even if one fails.
+    await Promise.allSettled(emailPromises);
+    return task;
   }
 
   findAllForUser(userId: string): Promise<Task[]> {
@@ -97,7 +167,7 @@ export class TasksService {
         assignees: userId,
         isArchived: false,
       })
-      .populate('owner assignees')
+      .populate('owner assignees assignedGroup comments.author')
       .sort({ createdAt: 'asc' })
       .exec();
   }
@@ -108,7 +178,7 @@ export class TasksService {
         assignees: userId,
         isArchived: true,
       })
-      .populate('owner assignees')
+      .populate('owner assignees assignedGroup')
       .sort({ updatedAt: 'desc' })
       .exec();
   }
@@ -119,7 +189,7 @@ export class TasksService {
       .find({
         $or: [{ status: 'Closed' }, { isArchived: true }],
       })
-      .select('title status isArchived createdAt updatedAt')
+      .select('title status isArchived createdAt updatedAt assignedGroup')
       .exec();
   }
 
@@ -127,7 +197,7 @@ export class TasksService {
     // Return all tasks to allow frontend to calculate Open/Active/Closed trends
     return this.taskModel
       .find()
-      .select('title status isArchived createdAt updatedAt')
+      .select('title status isArchived createdAt updatedAt assignedGroup')
       .exec();
   }
 
@@ -135,7 +205,7 @@ export class TasksService {
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
-      .populate('owner assignees')
+      .populate('owner assignees assignedGroup comments.author')
       .exec();
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
@@ -165,7 +235,9 @@ export class TasksService {
         updateTaskDto.assigneeIds,
       );
     }
-
+    if (updateTaskDto.assignedGroupId !== undefined)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      task.assignedGroup = updateTaskDto.assignedGroupId as any;
     // Explicitly set fields to ensure Mongoose tracks changes correctly
     if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
     if (updateTaskDto.description !== undefined)
@@ -201,7 +273,7 @@ export class TasksService {
 
     return this.taskModel
       .findById(savedTask.id)
-      .populate('owner assignees')
+      .populate('owner assignees assignedGroup comments.author')
       .exec();
   }
 
@@ -303,7 +375,7 @@ export class TasksService {
     // Return fully populated task so frontend gets user details immediately
     return this.taskModel
       .findById(taskId)
-      .populate('owner assignees comments.author')
+      .populate('owner assignees assignedGroup comments.author')
       .exec();
   }
 
@@ -382,19 +454,32 @@ export class TasksService {
     return { message: `Task with ID "${id}" has been removed` };
   }
 
-  async archiveTask(id: string, user: User): Promise<Task> {
+  async archiveTask(id: string, user: User): Promise<Task | null> {
     const task = await this.findOne(id, user.id);
     if (task.status !== 'Closed') {
       throw new BadRequestException('Only closed tasks can be archived.');
     }
     task.isArchived = true;
-    return task.save();
+
+    //return task.save();
+    await task.save();
+    return this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedGroup')
+      .exec();
   }
 
-  async unarchiveTask(id: string, user: User): Promise<Task> {
+  async unarchiveTask(id: string, user: User): Promise<Task | null> {
     const task = await this.findOne(id, user.id);
     task.isArchived = false;
-    return task.save();
+
+    //return task.save();
+
+    await task.save();
+    return this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedGroup')
+      .exec();
   }
 
   // --- Methods for Scheduler ---

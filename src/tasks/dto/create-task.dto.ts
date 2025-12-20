@@ -35,6 +35,10 @@ export class CreateTaskDto {
   @IsOptional()
   assigneeIds?: string[];
 
+  @IsMongoId()
+  @IsOptional()
+  assignedGroupId?: string;
+
   @IsArray()
   @IsOptional()
   attachments?: any[];
