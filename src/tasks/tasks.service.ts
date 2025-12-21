@@ -189,7 +189,7 @@ export class TasksService {
       .find({
         $or: [{ status: 'Closed' }, { isArchived: true }],
       })
-      .select('title status isArchived createdAt updatedAt assignedGroup')
+      .select('title status isArchived createdAt owner updatedAt assignedGroup')
       .exec();
   }
 
@@ -197,7 +197,7 @@ export class TasksService {
     // Return all tasks to allow frontend to calculate Open/Active/Closed trends
     return this.taskModel
       .find()
-      .select('title status isArchived createdAt updatedAt assignedGroup')
+      .select('title status isArchived createdAt owner updatedAt assignedGroup')
       .exec();
   }
 
