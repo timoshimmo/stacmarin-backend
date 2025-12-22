@@ -57,7 +57,6 @@ export class UsersController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.usersService.update(id, updateUserDto);
   }
 

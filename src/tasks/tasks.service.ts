@@ -95,13 +95,13 @@ export class TasksService {
       ...dto,
       owner: user.id,
       assignees: dto.assigneeIds || [user.id],
-      assignedGroup: dto.assignedGroupId || undefined,
+      assignedTeam: dto.assignedTeamId || undefined,
     });
 
     const savedTask = await createdTask.save();
     const task = await this.taskModel
       .findById(savedTask.id)
-      .populate('owner assignees assignedGroup')
+      .populate('owner assignees assignedTeam')
       .exec();
 
     // Collect email promises to await them all at the end
@@ -131,12 +131,12 @@ export class TasksService {
         }
       }
 
-      // Notify group members if a group is assigned
-      if (task.assignedGroup) {
+      // Notify team members if a team is assigned
+      if (task.assignedTeam) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const group = await (task.assignedGroup as any).populate('members');
+        const team = await (task.assignedTeam as any).populate('members');
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        for (const member of group.members) {
+        for (const member of team.members) {
           const isIndividualAssignee = task.assignees.some(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
             (a) => a.id.toString() === member.id.toString(),
@@ -148,7 +148,7 @@ export class TasksService {
               user: member,
               type: 'task',
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              message: `Group Task: "${task.title}" was assigned to ${group.name}`,
+              message: `Team Task: "${task.title}" was assigned to ${team.name}`,
             });
           }
         }
@@ -167,7 +167,7 @@ export class TasksService {
         assignees: userId,
         isArchived: false,
       })
-      .populate('owner assignees assignedGroup comments.author')
+      .populate('owner assignees assignedTeam comments.author')
       .sort({ createdAt: 'asc' })
       .exec();
   }
@@ -178,7 +178,7 @@ export class TasksService {
         assignees: userId,
         isArchived: true,
       })
-      .populate('owner assignees assignedGroup')
+      .populate('owner assignees assignedTeam')
       .sort({ updatedAt: 'desc' })
       .exec();
   }
@@ -189,7 +189,7 @@ export class TasksService {
       .find({
         $or: [{ status: 'Closed' }, { isArchived: true }],
       })
-      .select('title status isArchived createdAt owner updatedAt assignedGroup')
+      .select('title status isArchived createdAt owner updatedAt assignedTeam')
       .exec();
   }
 
@@ -197,7 +197,7 @@ export class TasksService {
     // Return all tasks to allow frontend to calculate Open/Active/Closed trends
     return this.taskModel
       .find()
-      .select('title status isArchived createdAt owner updatedAt assignedGroup')
+      .select('title status isArchived createdAt owner updatedAt assignedTeam')
       .exec();
   }
 
@@ -205,7 +205,7 @@ export class TasksService {
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
-      .populate('owner assignees assignedGroup comments.author')
+      .populate('owner assignees assignedTeam comments.author')
       .exec();
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
@@ -235,9 +235,9 @@ export class TasksService {
         updateTaskDto.assigneeIds,
       );
     }
-    if (updateTaskDto.assignedGroupId !== undefined)
+    if (updateTaskDto.assignedTeamId !== undefined)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      task.assignedGroup = updateTaskDto.assignedGroupId as any;
+      task.assignedTeam = updateTaskDto.assignedTeamId as any;
     // Explicitly set fields to ensure Mongoose tracks changes correctly
     if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
     if (updateTaskDto.description !== undefined)
@@ -273,7 +273,7 @@ export class TasksService {
 
     return this.taskModel
       .findById(savedTask.id)
-      .populate('owner assignees assignedGroup comments.author')
+      .populate('owner assignees assignedTeam comments.author')
       .exec();
   }
 
@@ -375,7 +375,7 @@ export class TasksService {
     // Return fully populated task so frontend gets user details immediately
     return this.taskModel
       .findById(taskId)
-      .populate('owner assignees assignedGroup comments.author')
+      .populate('owner assignees assignedTeam comments.author')
       .exec();
   }
 
@@ -465,7 +465,7 @@ export class TasksService {
     await task.save();
     return this.taskModel
       .findById(id)
-      .populate('owner assignees assignedGroup')
+      .populate('owner assignees assignedTeam')
       .exec();
   }
 
@@ -478,7 +478,7 @@ export class TasksService {
     await task.save();
     return this.taskModel
       .findById(id)
-      .populate('owner assignees assignedGroup')
+      .populate('owner assignees assignedTeam')
       .exec();
   }
 

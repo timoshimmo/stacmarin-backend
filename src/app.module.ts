@@ -14,6 +14,7 @@ import { DepartmentsModule } from './departments/departments.module';
 import { WellnessModule } from './wellness/wellness.module';
 import { RecognitionModule } from './recognition/recognition.module';
 import { SurveysModule } from './surveys/surveys.module';
+import { TeamsModule } from './teams/teams.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SurveysModule } from './surveys/surveys.module';
     WellnessModule,
     RecognitionModule,
     SurveysModule,
+    TeamsModule,
   ],
   controllers: [],
   providers: [],

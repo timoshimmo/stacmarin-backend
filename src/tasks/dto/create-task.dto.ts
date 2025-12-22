@@ -37,7 +37,7 @@ export class CreateTaskDto {
 
   @IsMongoId()
   @IsOptional()
-  assignedGroupId?: string;
+  assignedTeamId?: string;
 
   @IsArray()
   @IsOptional()
