@@ -14,6 +14,7 @@ import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class TasksService {
@@ -23,6 +24,7 @@ export class TasksService {
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
     private readonly emailService: EmailService,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async create(dto: CreateTaskDto, user: User): Promise<Task | null> {
@@ -379,6 +381,35 @@ export class TasksService {
       .exec();
   }
 
+  // FIX: Replaced Express.Multer.File with any to resolve "Cannot find namespace 'Express'" error.
+  async addAttachment(taskId: string, file: any): Promise<Task | null> {
+    const task = await this.taskModel.findById(taskId).exec();
+    if (!task) throw new NotFoundException('Task not found');
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    const base64File = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+
+    const url = await this.cloudinaryService.uploadImage(base64File);
+
+    const attachment = {
+      id: new Types.ObjectId().toString(),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      fileName: file.originalname,
+      url: url,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      size: file.size,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      mimetype: file.mimetype,
+    };
+
+    task.attachments.push(attachment);
+    await task.save();
+    return this.taskModel
+      .findById(taskId)
+      .populate('owner assignees assignedTeam comments.author')
+      .exec();
+  }
+
   async findRecentComments(): Promise<any[]> {
     return this.taskModel
       .aggregate([
@@ -506,6 +537,29 @@ export class TasksService {
         isArchived: false,
       })
       .populate('assignees')
+      .exec();
+  }
+
+  async findTasksDueToday(): Promise<TaskDocument[]> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return this.taskModel
+      .find({
+        dueDate: { $gte: startOfToday, $lte: endOfToday },
+        status: { $ne: 'Closed' },
+        isArchived: false,
+        dueReminderSent: false,
+      })
+      .populate('assignees')
+      .exec();
+  }
+
+  async markDueReminderSent(taskId: string): Promise<void> {
+    await this.taskModel
+      .updateOne({ _id: taskId }, { $set: { dueReminderSent: true } })
       .exec();
   }
 }

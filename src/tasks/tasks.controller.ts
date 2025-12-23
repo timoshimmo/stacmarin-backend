@@ -9,6 +9,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -17,6 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('tasks')
@@ -65,6 +68,13 @@ export class TasksController {
   @Get('comments/recent')
   getRecentComments() {
     return this.tasksService.findRecentComments();
+  }
+
+  @Post(':id/attachments')
+  @UseInterceptors(FileInterceptor('file'))
+  // FIX: Replaced Express.Multer.File with any to resolve "Cannot find namespace 'Express'" error.
+  uploadFile(@Param('id') id: string, @UploadedFile() file: any) {
+    return this.tasksService.addAttachment(id, file);
   }
 
   @Post(':id/reminders')

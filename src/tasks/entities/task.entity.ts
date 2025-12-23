@@ -85,6 +85,8 @@ export class Task extends Document {
   @Prop({ default: false })
   isArchived: boolean;
 
+  @Prop({ default: false }) dueReminderSent: boolean;
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   owner: User;
 
