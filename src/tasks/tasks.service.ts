@@ -553,7 +553,9 @@ export class TasksService {
         isArchived: false,
         dueReminderSent: false,
       })
+      .populate('owner')
       .populate('assignees')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
   }
 

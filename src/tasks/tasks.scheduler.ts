@@ -64,6 +64,14 @@ export class TasksScheduler {
         }
       }
 
+      // Collect task owner (creator)
+      const owner: any = task.owner;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (owner && owner.email) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        recipients.set(owner.email, owner);
+      }
+
       // Send notifications to all collected recipients
       for (const [email, user] of recipients.entries()) {
         // In-app notification
