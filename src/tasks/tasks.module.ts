@@ -7,6 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TasksScheduler } from './tasks.scheduler';
 import { EmailModule } from '../email/email.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { EmailModule } from '../email/email.module';
     UsersModule,
     NotificationsModule,
     EmailModule,
+    CloudinaryModule,
   ],
   controllers: [TasksController],
   providers: [TasksService, TasksScheduler],
