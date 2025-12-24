@@ -96,7 +96,7 @@ export class TasksService {
     const createdTask = new this.taskModel({
       ...dto,
       owner: user.id,
-      assignees: dto.assigneeIds || [user.id],
+      assignees: dto.assigneeIds || [],
       assignedTeam: dto.assignedTeamId || undefined,
     });
 
