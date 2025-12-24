@@ -51,9 +51,17 @@ export class TasksController {
     return this.tasksService.findAllGlobalTasks();
   }
 
+  /*
   @Get(':id')
   findOne(@Param('id') id: string, @GetUser() user: User) {
     return this.tasksService.findOne(id, user.id);
+  }
+
+    */
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.tasksService.findOne(id);
   }
 
   @Patch(':id')

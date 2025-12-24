@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
@@ -208,6 +209,7 @@ export class TasksService {
   }
 
   // FIX: Change return type to TaskDocument to ensure methods like .save() and properties like ._id are available.
+  /*
   async findOne(id: string, userId: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
@@ -228,12 +230,47 @@ export class TasksService {
     return task;
   }
 
+  async findOne(id: string, userId: string): Promise<TaskDocument> {
+    const task = await this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedTeam comments.author')
+      .exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID "${id}" not found`);
+    }
+
+     const isAssignee = task.assignees.some(
+      (assignee) => assignee.id.toString() === userId,
+    );
+    if (!isAssignee) {
+      throw new ForbiddenException(
+        'You do not have permission to access this task',
+      );
+    }
+    
+    return task;
+  }
+
+  */
+
+  async findOne(id: string): Promise<TaskDocument> {
+    const task = await this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedTeam comments.author')
+      .exec();
+    if (!task) {
+      throw new NotFoundException(`Task with ID "${id}" not found`);
+    }
+
+    return task;
+  }
+
   async update(
     id: string,
     updateTaskDto: UpdateTaskDto,
     user: User,
   ): Promise<Task | null> {
-    const task = await this.findOne(id, user.id);
+    const task = await this.findOne(id);
     const originalStatus = task.status;
 
     if (updateTaskDto.assigneeIds) {
@@ -451,7 +488,7 @@ export class TasksService {
     id: string,
     user: User,
   ): Promise<{ message: string }> {
-    const task = await this.findOne(id, user.id);
+    const task = await this.findOne(id);
 
     if (!task.assignees || task.assignees.length === 0) {
       throw new BadRequestException('No assignees to remind.');
@@ -483,14 +520,16 @@ export class TasksService {
     return { message: 'Reminders sent successfully.' };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async remove(id: string, user: User): Promise<{ message: string }> {
-    const task = await this.findOne(id, user.id);
+    const task = await this.findOne(id);
     await this.taskModel.deleteOne({ _id: task._id }).exec();
     return { message: `Task with ID "${id}" has been removed` };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async archiveTask(id: string, user: User): Promise<Task | null> {
-    const task = await this.findOne(id, user.id);
+    const task = await this.findOne(id);
     if (task.status !== 'Closed') {
       throw new BadRequestException('Only closed tasks can be archived.');
     }
@@ -504,8 +543,9 @@ export class TasksService {
       .exec();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async unarchiveTask(id: string, user: User): Promise<Task | null> {
-    const task = await this.findOne(id, user.id);
+    const task = await this.findOne(id);
     task.isArchived = false;
 
     //return task.save();
