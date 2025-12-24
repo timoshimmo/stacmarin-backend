@@ -101,10 +101,14 @@ export class TasksService {
     });
 
     const savedTask = await createdTask.save();
+    console.log(`SAVED TASK: ${JSON.stringify(savedTask)}`);
+
     const task = await this.taskModel
       .findById(savedTask.id)
       .populate('owner assignees assignedTeam')
       .exec();
+
+    console.log(`TASK: ${JSON.stringify(task)}`);
 
     // Collect email promises to await them all at the end
     const emailPromises: Promise<any>[] = [];
