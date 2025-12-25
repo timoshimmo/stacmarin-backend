@@ -171,9 +171,10 @@ export class TasksService {
   findAllForUser(userId: string): Promise<Task[]> {
     return this.taskModel
       .find({
-        assignees: userId,
-        owner: userId,
-        isArchived: false,
+        $or: [
+          { assignees: userId, isArchived: false, },
+          { owner: userId, isArchived: false, }
+        ],
       })
       .populate('owner assignees assignedTeam comments.author')
       .sort({ createdAt: 'asc' })
