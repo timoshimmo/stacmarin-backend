@@ -172,8 +172,8 @@ export class TasksService {
     return this.taskModel
       .find({
         $or: [
-          { assignees: userId, isArchived: false, },
-          { owner: userId, isArchived: false, }
+          { assignees: userId, isArchived: false },
+          { owner: userId, isArchived: false },
         ],
       })
       .populate('owner assignees assignedTeam comments.author')
