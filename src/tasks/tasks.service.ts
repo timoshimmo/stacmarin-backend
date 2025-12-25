@@ -172,6 +172,7 @@ export class TasksService {
     return this.taskModel
       .find({
         assignees: userId,
+        owner: userId,
         isArchived: false,
       })
       .populate('owner assignees assignedTeam comments.author')
