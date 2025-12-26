@@ -93,6 +93,31 @@ export class EmailService {
     await this.sendMail(email, subject, html);
   }
 
+  async sendTaskAssignmentTeamEmail(
+    email: string,
+    taskTitle: string,
+    assignerName: string,
+    teamName: string,
+  ) {
+    const subject = `New Task Assigned: ${taskTitle}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+        <h2>New Task Assignment</h2>
+        <p>Hello,</p>
+        <p><strong>${assignerName}</strong> has assigned your team ${teamName} a new task: <strong>${taskTitle}</strong>.</p>
+        <p>Please log in to your dashboard to view details and start working on it.</p>
+        <br/>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${this.frontendUrl}/tasks" style="background-color: #39bc3c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Task</a>
+        </div>
+        <br/>
+        <p>Best regards,</p>
+        <p>The StacConnect Team</p>
+      </div>
+    `;
+    await this.sendMail(email, subject, html);
+  }
+
   async sendTaskReminderEmail(
     email: string,
     taskTitle: string,

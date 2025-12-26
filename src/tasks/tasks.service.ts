@@ -157,6 +157,19 @@ export class TasksService {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               message: `Team Task: "${task.title}" was assigned to ${team.name}`,
             });
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (member.email)
+              emailPromises.push(
+                this.emailService.sendTaskAssignmentTeamEmail(
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                  member.email,
+                  task.title,
+                  user.name,
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                  team.name,
+                ),
+              );
           }
         }
       }
