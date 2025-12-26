@@ -102,14 +102,10 @@ export class TasksService {
     });
 
     const savedTask = await createdTask.save();
-    console.log(`SAVED TASK: ${JSON.stringify(savedTask)}`);
-
     const task = await this.taskModel
       .findById(savedTask.id)
       .populate('owner assignees assignedTeam')
       .exec();
-
-    console.log(`TASK: ${JSON.stringify(task)}`);
 
     // Collect email promises to await them all at the end
     const emailPromises: Promise<any>[] = [];
@@ -181,7 +177,7 @@ export class TasksService {
     return task;
   }
 
-  findAllForUser(userId: string): Promise<Task[]> {
+  async findAllForUser(userId: string): Promise<Task[]> {
     return this.taskModel
       .find({
         $or: [
@@ -616,6 +612,182 @@ export class TasksService {
       .populate('assignees')
       .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
+  }
+
+  async notifyTasksDue(id: string): Promise<{ message: string }> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const task = await this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedTeam dueDate')
+      .exec();
+
+    // Collect email promises to await them all at the end
+    const emailPromises: Promise<any>[] = [];
+
+    if (task !== null) {
+      const taskDuedate = new Date(task.dueDate.toString());
+
+      if (taskDuedate >= startOfToday && taskDuedate <= endOfToday) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        const userData = await this.usersService.findOne(task.owner.toString());
+
+        if (task.assignees) {
+          for (const assignee of task.assignees) {
+            await this.notificationsService.create({
+              user: assignee,
+              type: 'task',
+              message: `New task: "${task.title}"`,
+            });
+
+            if (userData !== null) {
+              if (assignee.email)
+                emailPromises.push(
+                  this.emailService.sendTaskReminderEmail(
+                    assignee.email,
+                    task.title,
+                    userData.name,
+                  ),
+                );
+            }
+          }
+        }
+
+        // Notify team members if a team is assigned
+        if (task.assignedTeam) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          const team = await (task.assignedTeam as any).populate('members');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          for (const member of team.members) {
+            /*
+            const isIndividualAssignee = task.assignees.some(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              (a) => a.id.toString() === member.id.toString(),
+            );
+            */
+
+            await this.notificationsService.create({
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: member,
+              type: 'task',
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              message: `Team Task: "${task.title}" was assigned to ${team.name}`,
+            });
+
+            if (userData !== null) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              if (member.email)
+                emailPromises.push(
+                  this.emailService.sendTaskReminderEmail(
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                    member.email,
+                    task.title,
+                    userData.name,
+                  ),
+                );
+            }
+          }
+        }
+      }
+
+      // Wait for all emails to be sent.
+      // Using Promise.allSettled allows successful emails to pass even if one fails.
+      await Promise.allSettled(emailPromises);
+      await this.markDueReminderSent(id);
+    }
+
+    return { message: 'Reminders sent successfully.' };
+  }
+
+  async notifyTasksOverdue(id: string): Promise<{ message: string }> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const task = await this.taskModel
+      .findById(id)
+      .populate('owner assignees assignedTeam dueDate')
+      .exec();
+
+    // Collect email promises to await them all at the end
+    const emailPromises: Promise<any>[] = [];
+
+    if (task !== null) {
+      const taskDuedate = new Date(task.dueDate.toString());
+
+      if (taskDuedate < endOfToday) {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        const userData = await this.usersService.findOne(task.owner.toString());
+
+        if (task.assignees) {
+          for (const assignee of task.assignees) {
+            await this.notificationsService.create({
+              user: assignee,
+              type: 'task',
+              message: `New task: "${task.title}"`,
+            });
+
+            if (userData !== null) {
+              if (assignee.email)
+                emailPromises.push(
+                  this.emailService.sendTaskReminderEmail(
+                    assignee.email,
+                    task.title,
+                    userData.name,
+                  ),
+                );
+            }
+          }
+        }
+
+        // Notify team members if a team is assigned
+        if (task.assignedTeam) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          const team = await (task.assignedTeam as any).populate('members');
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          for (const member of team.members) {
+            /*
+            const isIndividualAssignee = task.assignees.some(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+              (a) => a.id.toString() === member.id.toString(),
+            );
+            */
+
+            await this.notificationsService.create({
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: member,
+              type: 'task',
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              message: `Team Task: "${task.title}" was assigned to ${team.name}`,
+            });
+
+            if (userData !== null) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              if (member.email)
+                emailPromises.push(
+                  this.emailService.sendTaskReminderEmail(
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+                    member.email,
+                    task.title,
+                    userData.name,
+                  ),
+                );
+            }
+          }
+        }
+      }
+
+      // Wait for all emails to be sent.
+      // Using Promise.allSettled allows successful emails to pass even if one fails.
+      await Promise.allSettled(emailPromises);
+      await this.markDueReminderSent(id);
+    }
+
+    return { message: 'Reminders sent successfully.' };
   }
 
   async markDueReminderSent(taskId: string): Promise<void> {

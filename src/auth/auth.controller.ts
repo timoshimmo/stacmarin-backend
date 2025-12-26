@@ -9,6 +9,7 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.authService.register(createUserDto);
   }
 

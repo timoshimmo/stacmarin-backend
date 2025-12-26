@@ -162,6 +162,26 @@ export class EmailService {
     await this.sendMail(email, subject, html);
   }
 
+  async sendTaskOverdueEmail(email: string, taskTitle: string) {
+    const subject = `Overdue: Task - ${taskTitle}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #ef4444;">Task Overdue</h2>
+        <p>Hello,</p>
+        <p>The following task is now overdue: <strong>${taskTitle}</strong>.</p>
+        <p>Please prioritize this task and update its status as soon as possible.</p>
+        <br/>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${this.frontendUrl}/tasks" style="background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Task in Dashboard</a>
+        </div>
+        <br/>
+        <p>Best regards,</p>
+        <p>The StacConnect Team</p>
+      </div>
+    `;
+    await this.sendMail(email, subject, html);
+  }
+
   private async sendMail(to: string, subject: string, html: string) {
     const from = this.configService.get<string>(
       'SMTP_FROM',
