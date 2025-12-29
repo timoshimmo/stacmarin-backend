@@ -185,7 +185,7 @@ export class TasksService {
           { owner: userId, isArchived: false },
         ],
       })
-      .populate('owner assignees assignedTeam comments.author')
+      .populate('owner assignees assignedTeam title status comments.author updatedAt isArchived')
       .sort({ createdAt: 'asc' })
       .exec();
   }
