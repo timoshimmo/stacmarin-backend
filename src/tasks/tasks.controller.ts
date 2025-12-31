@@ -85,6 +85,14 @@ export class TasksController {
     return this.tasksService.addAttachment(id, file);
   }
 
+  @Delete(':id/attachments/:attachmentId')
+  deleteFile(
+    @Param('id') id: string,
+    @Param('attachmentId') attachmentId: string,
+  ) {
+    return this.tasksService.deleteAttachment(id, attachmentId);
+  }
+
   @Post(':id/reminders')
   @HttpCode(HttpStatus.OK)
   sendReminders(@Param('id') id: string, @GetUser() user: User) {

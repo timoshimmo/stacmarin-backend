@@ -56,10 +56,12 @@ export class TeamsService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const userId = user.id || (user as any)._id?.toString();
 
-    if (creatorId !== userId && user.role !== UserRole.MANAGER) {
-      throw new ForbiddenException(
-        'You do not have permission to view this team',
-      );
+    if (user.role !== UserRole.ADMIN) {
+      if (user.role !== UserRole.MANAGER && creatorId !== userId) {
+        throw new ForbiddenException(
+          'You do not have permission to view this team',
+        );
+      }
     }
 
     return team;

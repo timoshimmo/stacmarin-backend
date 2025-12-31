@@ -186,7 +186,7 @@ export class TasksService {
         ],
       })
       .populate(
-        'owner assignees assignedTeam title status comments.author updatedAt isArchived',
+        'owner assignees assignedTeam title status comments.author updatedAt isArchived attachments',
       )
       .sort({ createdAt: 'asc' })
       .exec();
@@ -269,7 +269,7 @@ export class TasksService {
   async findOne(id: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
-      .populate('owner assignees assignedTeam comments.author')
+      .populate('owner assignees assignedTeam comments.author attachments')
       .exec();
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
@@ -462,6 +462,15 @@ export class TasksService {
       .findById(taskId)
       .populate('owner assignees assignedTeam comments.author')
       .exec();
+  }
+
+  async deleteAttachment(taskId: string, attachmentId: string): Promise<Task> {
+    const task = await this.taskModel.findById(taskId).exec();
+    if (!task) throw new NotFoundException('Task not found');
+
+    task.attachments = task.attachments.filter((a) => a.id !== attachmentId);
+    await task.save();
+    return this.findOne(taskId);
   }
 
   async findRecentComments(): Promise<any[]> {
