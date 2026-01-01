@@ -4,6 +4,7 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -11,6 +12,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 // FIX: Import TaskDocument to use for Mongoose model and document typing.
 import { Task, TaskDocument } from './entities/task.entity';
+import { Team, TeamDocument } from '../teams/entities/team.entity';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -19,9 +21,12 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   constructor(
     // FIX: Use TaskDocument for the injected model type.
     @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
     private readonly emailService: EmailService,
@@ -291,10 +296,31 @@ export class TasksService {
         updateTaskDto.assigneeIds,
       );
     }
-    if (updateTaskDto.assignedTeamId !== undefined)
+    if (updateTaskDto.assignedTeamId !== undefined) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       task.assignedTeam = updateTaskDto.assignedTeamId as any;
-    // Explicitly set fields to ensure Mongoose tracks changes correctly
+      // Explicitly set fields to ensure Mongoose tracks changes correctly
+    }
+
+    // Check if team assignment changed
+    if (updateTaskDto.assignedTeamId !== undefined) {
+      //if (task.assignedTeam !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      const oldTeamId = task.assignedTeam?.toString();
+      const newTeamId = updateTaskDto.assignedTeamId;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      task.assignedTeam = newTeamId
+        ? (new Types.ObjectId(newTeamId) as any)
+        : undefined;
+
+      // If a new team is assigned (not just cleared), notify everyone on that team
+      if (newTeamId && oldTeamId !== newTeamId) {
+        void this.notifyTeamMembers(id, newTeamId, user.name);
+      }
+      //}
+    }
+
     if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
     if (updateTaskDto.description !== undefined)
       task.description = updateTaskDto.description;
@@ -331,6 +357,45 @@ export class TasksService {
       .findById(savedTask.id)
       .populate('owner assignees assignedTeam comments.author')
       .exec();
+  }
+
+  private async notifyTeamMembers(
+    taskId: string,
+    teamId: string,
+    assignerName: string,
+  ) {
+    try {
+      const team = await this.teamModel
+        .findById(teamId)
+        .populate('members')
+        .exec();
+      const task = await this.taskModel.findById(taskId).exec();
+
+      if (team && team.members && task) {
+        for (const member of team.members) {
+          if (member.email) {
+            await this.emailService.sendTaskAssignmentEmail(
+              member.email,
+              task.title,
+              assignerName,
+              taskId,
+            );
+          }
+          // Also add in-app notification
+          await this.notificationsService.create({
+            user: member,
+            type: 'task',
+            message: `${assignerName} assigned your team to task: "${task.title}"`,
+          });
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      this.logger.error(
+        `Failed to notify team members for team ${teamId}:`,
+        error,
+      );
+    }
   }
 
   /*
