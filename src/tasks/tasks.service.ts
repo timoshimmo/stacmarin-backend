@@ -321,6 +321,24 @@ export class TasksService {
       //}
     }
 
+    // Check if team assignment changed
+    if (updateTaskDto.assignedTeamId !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      const oldTeamId = task.assignedTeam?.toString();
+      const newTeamId = updateTaskDto.assignedTeamId;
+
+      // Correctly handle removal or reassignment
+      if (newTeamId && newTeamId.length === 24) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        task.assignedTeam = new Types.ObjectId(newTeamId) as any;
+
+        // If a new team is assigned (not just cleared), notify everyone on that team
+        if (oldTeamId !== newTeamId) {
+          void this.notifyTeamMembers(id, newTeamId, user.name);
+        }
+      }
+    }
+
     if (updateTaskDto.title !== undefined) task.title = updateTaskDto.title;
     if (updateTaskDto.description !== undefined)
       task.description = updateTaskDto.description;
