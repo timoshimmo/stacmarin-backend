@@ -395,11 +395,9 @@ export class TasksService {
         for (const member of team.members) {
           if (member.email) {
             await this.emailService.sendTaskAssignmentTeamEmail(
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
               member.email,
               task.title,
               member.name,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
               team.name,
             );
           }
@@ -412,7 +410,6 @@ export class TasksService {
         }
       }
     } catch (error) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       this.logger.error(
         `Failed to notify team members for team ${teamId}:`,
         error,
@@ -530,7 +527,16 @@ export class TasksService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const base64File = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
-    const url = await this.cloudinaryService.uploadImage(base64File);
+    //const url = await this.cloudinaryService.uploadImage(base64File);
+    // Explicitly target the attachments folder
+    const url = await this.cloudinaryService.uploadFile(
+      base64File,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      file.originalname,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      file.mimetype,
+      'stacconnect/attachments',
+    );
 
     const attachment = {
       id: new Types.ObjectId().toString(),
