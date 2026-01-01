@@ -303,9 +303,9 @@ export class TasksService {
     }
 
     // Check if team assignment changed
+    /*
     if (updateTaskDto.assignedTeamId !== undefined) {
-      //if (task.assignedTeam !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      
       const oldTeamId = task.assignedTeam?.toString();
       const newTeamId = updateTaskDto.assignedTeamId;
 
@@ -318,8 +318,10 @@ export class TasksService {
       if (newTeamId && oldTeamId !== newTeamId) {
         void this.notifyTeamMembers(id, newTeamId, user.name);
       }
-      //}
+      
     }
+
+      */
 
     // Check if team assignment changed
     if (updateTaskDto.assignedTeamId !== undefined) {
@@ -392,11 +394,13 @@ export class TasksService {
       if (team && team.members && task) {
         for (const member of team.members) {
           if (member.email) {
-            await this.emailService.sendTaskAssignmentEmail(
+            await this.emailService.sendTaskAssignmentTeamEmail(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
               member.email,
               task.title,
-              assignerName,
-              taskId,
+              member.name,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+              team.name,
             );
           }
           // Also add in-app notification
