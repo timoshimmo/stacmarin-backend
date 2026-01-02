@@ -183,11 +183,20 @@ export class TasksService {
   }
 
   async findAllForUser(userId: string): Promise<Task[]> {
+    // 1. Find all teams the user belongs to
+    const userTeams = await this.teamModel
+      .find({ members: userId })
+      .select('_id')
+      .exec();
+    const teamIds = userTeams.map((t) => t._id);
+
+    // 2. Find tasks where user is assignee, owner, OR part of the assigned team
     return this.taskModel
       .find({
         $or: [
           { assignees: userId, isArchived: false },
           { owner: userId, isArchived: false },
+          { assignedTeam: { $in: teamIds } },
         ],
       })
       .populate(

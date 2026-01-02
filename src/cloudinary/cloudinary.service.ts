@@ -13,8 +13,7 @@ export class CloudinaryService {
       // Determine resource type based on mimetype
       // Cloudinary needs 'raw' for non-media files to preserve extensions and content-type
       let resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto';
-
-      if (mimetype.startsWith('image/')) {
+      if (mimetype.startsWith('image/') || mimetype === 'application/pdf') {
         resourceType = 'image';
       } else if (mimetype.startsWith('video/')) {
         resourceType = 'video';
