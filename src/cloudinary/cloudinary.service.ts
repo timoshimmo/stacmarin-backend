@@ -13,7 +13,14 @@ export class CloudinaryService {
       // Determine resource type based on mimetype
       // Cloudinary needs 'raw' for non-media files to preserve extensions and content-type
       let resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto';
-      if (mimetype.startsWith('image/') || mimetype === 'application/pdf') {
+
+      // Cloudinary treats PDFs as 'image' resource type (documents)
+      // This allows for correct MIME type serving and transformations like fl_attachment
+      const isPdf =
+        mimetype === 'application/pdf' ||
+        filename.toLowerCase().endsWith('.pdf');
+
+      if (mimetype.startsWith('image/') || isPdf) {
         resourceType = 'image';
       } else if (mimetype.startsWith('video/')) {
         resourceType = 'video';
@@ -21,12 +28,16 @@ export class CloudinaryService {
         resourceType = 'raw';
       }
 
-      // Remove extension from filename for public_id as Cloudinary adds it back for images/videos
-      // but keep it for 'raw' files to ensure the extension is part of the stored filename.
+      // Sanitize filename: remove extension for public_id for image/video/pdf
+      // but keep it for 'raw' files as Cloudinary raw delivery requires it.
       const publicId =
         resourceType === 'raw'
           ? filename
-          : filename.split('.').slice(0, -1).join('.');
+          : filename
+              .split('.')
+              .slice(0, -1)
+              .join('.')
+              .replace(/[^a-zA-Z0-9_-]/g, '_');
 
       void v2.uploader.upload(
         file,
@@ -36,6 +47,8 @@ export class CloudinaryService {
           public_id: publicId,
           use_filename: true,
           unique_filename: true,
+          access_mode: 'public',
+          type: 'upload',
         },
         (error, result) => {
           // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
