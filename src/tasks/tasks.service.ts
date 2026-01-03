@@ -550,12 +550,13 @@ export class TasksService {
     );
     */
 
+    //const url = await this.fileStorageService.saveFile(file.buffer, file.originalname, 'attachments');
+
     const url = await this.fileStorageService.saveFile(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       file.buffer,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       file.originalname,
-      'attachments',
     );
 
     const attachment = {

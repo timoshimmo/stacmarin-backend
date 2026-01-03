@@ -1,51 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-// Fix: Explicitly import Buffer from 'buffer' for type safety in environments with missing global node types
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { StoredFile, StoredFileDocument } from './entities/stored-file.entity';
 import { Buffer } from 'buffer';
 
 @Injectable()
 export class FileStorageService {
   private readonly logger = new Logger(FileStorageService.name);
-  // Fix: Cast process to any to access cwd() method when Process type is incomplete
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  private readonly uploadRoot = path.join((process as any).cwd(), 'uploads');
 
-  constructor() {
-    this.ensureDirectoryExists(this.uploadRoot);
+  constructor(
+    @InjectModel(StoredFile.name) private fileModel: Model<StoredFileDocument>,
+  ) {}
+
+  async saveFile(buffer: Buffer, originalName: string): Promise<string> {
+    const createdFile = new this.fileModel({
+      filename: originalName,
+      mimetype: this.getMimeType(originalName),
+      size: buffer.length,
+      data: buffer,
+    });
+
+    const saved = await createdFile.save();
+    // Return an API path that the FilesController will handle
+    return `/files/download/${saved.id}`;
   }
 
-  private ensureDirectoryExists(dirPath: string) {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-  }
-
-  // Fix: Use imported Buffer type
-  async saveFile(
-    buffer: Buffer,
-    originalName: string,
-    subFolder: string,
-  ): Promise<string> {
-    const targetDir = path.join(this.uploadRoot, subFolder);
-    this.ensureDirectoryExists(targetDir);
-
-    const fileExt = path.extname(originalName);
-    const fileName = `${uuidv4()}${fileExt}`;
-    const filePath = path.join(targetDir, fileName);
-
-    await fs.promises.writeFile(filePath, buffer);
-
-    // Return the relative URL path
-    return `/uploads/${subFolder}/${fileName}`;
-  }
-
-  async saveBase64(base64Data: string, subFolder: string): Promise<string> {
-    const targetDir = path.join(this.uploadRoot, subFolder);
-    this.ensureDirectoryExists(targetDir);
-
-    // Extract mime type and data
+  async saveBase64(base64Data: string): Promise<string> {
     const matches = base64Data.match(
       /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/,
     );
@@ -55,15 +35,48 @@ export class FileStorageService {
 
     const mimeType = matches[1];
     const data = matches[2];
-    // Fix: Use imported Buffer class
     const buffer = Buffer.from(data, 'base64');
 
     const extension = mimeType.split('/')[1] || 'png';
-    const fileName = `${uuidv4()}.${extension}`;
-    const filePath = path.join(targetDir, fileName);
+    const filename = `upload_${Date.now()}.${extension}`;
 
-    await fs.promises.writeFile(filePath, buffer);
+    const createdFile = new this.fileModel({
+      filename: filename,
+      mimetype: mimeType,
+      size: buffer.length,
+      data: buffer,
+    });
 
-    return `/uploads/${subFolder}/${fileName}`;
+    const saved = await createdFile.save();
+    return `/files/download/${saved.id}`;
+  }
+
+  async getFile(id: string): Promise<StoredFileDocument | null> {
+    return this.fileModel.findById(id).exec();
+  }
+
+  private getMimeType(filename: string): string {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    switch (ext) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'png':
+        return 'image/png';
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'gif':
+        return 'image/gif';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls':
+        return 'application/vnd.ms-excel';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      default:
+        return 'application/octet-stream';
+    }
   }
 }
