@@ -18,6 +18,7 @@ import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EmailService } from '../email/email.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { FileStorageService } from '../file-storage/file-storage.service';
 
 @Injectable()
 export class TasksService {
@@ -31,6 +32,7 @@ export class TasksService {
     private readonly notificationsService: NotificationsService,
     private readonly emailService: EmailService,
     private cloudinaryService: CloudinaryService,
+    private readonly fileStorageService: FileStorageService,
   ) {}
 
   async create(dto: CreateTaskDto, user: User): Promise<Task | null> {
@@ -533,11 +535,11 @@ export class TasksService {
     const task = await this.taskModel.findById(taskId).exec();
     if (!task) throw new NotFoundException('Task not found');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    const base64File = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    // const base64File = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
     //const url = await this.cloudinaryService.uploadImage(base64File);
     // Explicitly target the attachments folder
+    /*
     const url = await this.cloudinaryService.uploadFile(
       base64File,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
@@ -545,6 +547,15 @@ export class TasksService {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       file.mimetype,
       'stacconnect/attachments',
+    );
+    */
+
+    const url = await this.fileStorageService.saveFile(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      file.buffer,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      file.originalname,
+      'attachments',
     );
 
     const attachment = {

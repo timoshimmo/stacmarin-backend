@@ -12,6 +12,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmailModule } from './email/email.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { WellnessModule } from './wellness/wellness.module';
+import { FileStorageModule } from './file-storage/file-storage.module';
 import { RecognitionModule } from './recognition/recognition.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { TeamsModule } from './teams/teams.module';
@@ -34,6 +35,7 @@ import { TeamsModule } from './teams/teams.module';
     DepartmentsModule,
     WellnessModule,
     RecognitionModule,
+    FileStorageModule,
     SurveysModule,
     TeamsModule,
   ],
