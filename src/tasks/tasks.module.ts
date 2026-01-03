@@ -9,6 +9,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TasksScheduler } from './tasks.scheduler';
 import { EmailModule } from '../email/email.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { FileStorageModule } from 'src/file-storage/file-storage.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
     NotificationsModule,
     EmailModule,
     CloudinaryModule,
+    FileStorageModule,
   ],
   controllers: [TasksController],
   providers: [TasksService, TasksScheduler],
