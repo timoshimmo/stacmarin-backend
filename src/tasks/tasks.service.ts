@@ -265,18 +265,20 @@ export class TasksService {
 
     if (updateTaskDto.assigneeIds !== undefined) {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      const oldAssigneeIds = task.assignees.map((a) => a.toString());
+      //const oldAssigneeIds = task.assignees.map((a) => a.toString());
+
+      const oldAssigneeIds = task.assignees;
       const newAssigneeIds = updateTaskDto.assigneeIds;
 
       console.log(`Old Assignees: ${JSON.stringify(oldAssigneeIds)}`);
       console.log(`New Assignees: ${JSON.stringify(newAssigneeIds)}`);
       // eslint-disable-next-line prettier/prettier
-      const newlyAddedAssignees = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id));
+      const newlyAddedAssignees = oldAssigneeIds.filter(data => !newAssigneeIds.includes(data.id));
 
       console.log(`Compare Assignees: ${JSON.stringify(newlyAddedAssignees)}`);
 
       if (newlyAddedAssignees.length > 0) {
-        void this.notifyIndividualAssignees(id, newlyAddedAssignees, user.name);
+        void this.notifyIndividualAssignees(id, newAssigneeIds, user.name);
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       task.assignees = newAssigneeIds.map(
