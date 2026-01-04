@@ -202,9 +202,8 @@ export class TasksService {
         ],
       })
       .populate(
-        'owner assignees title status comments.author updatedAt isArchived attachments',
+        'owner assignees title assignedTeam status comments.author updatedAt isArchived attachments',
       )
-      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .sort({ createdAt: 'asc' })
       .exec();
   }
