@@ -202,8 +202,9 @@ export class TasksService {
         ],
       })
       .populate(
-        'owner assignees assignedTeam title status comments.author updatedAt isArchived attachments',
+        'owner assignees title status comments.author updatedAt isArchived attachments',
       )
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .sort({ createdAt: 'asc' })
       .exec();
   }
@@ -214,7 +215,8 @@ export class TasksService {
         assignees: userId,
         isArchived: true,
       })
-      .populate('owner assignees assignedTeam')
+      .populate('owner assignees')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .sort({ updatedAt: 'desc' })
       .exec();
   }
@@ -225,7 +227,8 @@ export class TasksService {
       .find({
         $or: [{ status: 'Closed' }, { isArchived: true }],
       })
-      .select('title status isArchived createdAt owner updatedAt assignedTeam')
+      .select('title status isArchived createdAt owner updatedAt')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
   }
 
@@ -233,59 +236,16 @@ export class TasksService {
     // Return all tasks to allow frontend to calculate Open/Active/Closed trends
     return this.taskModel
       .find()
-      .select('title status isArchived createdAt owner updatedAt assignedTeam')
+      .select('title status isArchived createdAt owner updatedAt')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
   }
-
-  // FIX: Change return type to TaskDocument to ensure methods like .save() and properties like ._id are available.
-  /*
-  async findOne(id: string, userId: string): Promise<TaskDocument> {
-    const task = await this.taskModel
-      .findById(id)
-      .populate('owner assignees assignedTeam comments.author')
-      .exec();
-    if (!task) {
-      throw new NotFoundException(`Task with ID "${id}" not found`);
-    }
-
-    const isAssignee = task.assignees.some(
-      (assignee) => assignee.id.toString() === userId,
-    );
-    if (!isAssignee) {
-      throw new ForbiddenException(
-        'You do not have permission to access this task',
-      );
-    }
-    return task;
-  }
-
-  async findOne(id: string, userId: string): Promise<TaskDocument> {
-    const task = await this.taskModel
-      .findById(id)
-      .populate('owner assignees assignedTeam comments.author')
-      .exec();
-    if (!task) {
-      throw new NotFoundException(`Task with ID "${id}" not found`);
-    }
-
-     const isAssignee = task.assignees.some(
-      (assignee) => assignee.id.toString() === userId,
-    );
-    if (!isAssignee) {
-      throw new ForbiddenException(
-        'You do not have permission to access this task',
-      );
-    }
-    
-    return task;
-  }
-
-  */
 
   async findOne(id: string): Promise<TaskDocument> {
     const task = await this.taskModel
       .findById(id)
-      .populate('owner assignees assignedTeam comments.author attachments')
+      .populate('owner assignees comments.author attachments')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
     if (!task) {
       throw new NotFoundException(`Task with ID "${id}" not found`);
@@ -299,40 +259,39 @@ export class TasksService {
     updateTaskDto: UpdateTaskDto,
     user: User,
   ): Promise<Task | null> {
+    //const task = await this.taskModel.findById(id).exec();
     const task = await this.findOne(id);
     const originalStatus = task.status;
 
+    if (updateTaskDto.assigneeIds !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
+      const oldAssigneeIds = task.assignees.map((a) => a.toString());
+      const newAssigneeIds = updateTaskDto.assigneeIds;
+      // eslint-disable-next-line prettier/prettier
+      const newlyAddedAssignees = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id));
+
+      if (newlyAddedAssignees.length > 0) {
+        void this.notifyIndividualAssignees(id, newlyAddedAssignees, user.name);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      task.assignees = newAssigneeIds.map(
+        (id) => new Types.ObjectId(id),
+      ) as any;
+    }
+
+    /*
     if (updateTaskDto.assigneeIds) {
       task.assignees = await this.usersService.findByIds(
         updateTaskDto.assigneeIds,
       );
     }
+
     if (updateTaskDto.assignedTeamId !== undefined) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       task.assignedTeam = updateTaskDto.assignedTeamId as any;
       // Explicitly set fields to ensure Mongoose tracks changes correctly
     }
-
-    // Check if team assignment changed
-    /*
-    if (updateTaskDto.assignedTeamId !== undefined) {
-      
-      const oldTeamId = task.assignedTeam?.toString();
-      const newTeamId = updateTaskDto.assignedTeamId;
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      task.assignedTeam = newTeamId
-        ? (new Types.ObjectId(newTeamId) as any)
-        : undefined;
-
-      // If a new team is assigned (not just cleared), notify everyone on that team
-      if (newTeamId && oldTeamId !== newTeamId) {
-        void this.notifyTeamMembers(id, newTeamId, user.name);
-      }
-      
-    }
-
-      */
+    */
 
     // Check if team assignment changed
     if (updateTaskDto.assignedTeamId !== undefined) {
@@ -386,8 +345,42 @@ export class TasksService {
 
     return this.taskModel
       .findById(savedTask.id)
-      .populate('owner assignees assignedTeam comments.author')
+      .populate('owner assignees comments.author')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
+  }
+
+  private async notifyIndividualAssignees(
+    taskId: string,
+    userIds: string[],
+    assignerName: string,
+  ) {
+    try {
+      const task = await this.taskModel.findById(taskId).exec();
+      if (!task) return;
+
+      const users = await this.usersService.findByIds(userIds);
+      for (const user of users) {
+        if (user.email) {
+          await this.emailService.sendTaskAssignmentEmail(
+            user.email,
+            task.title,
+            assignerName,
+            taskId,
+          );
+        }
+        await this.notificationsService.create({
+          user: user,
+          type: 'task',
+          message: `${assignerName} assigned you to task: "${task.title}"`,
+        });
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to notify individual assignees for task ${taskId}:`,
+        error,
+      );
+    }
   }
 
   private async notifyTeamMembers(
