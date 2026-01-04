@@ -264,7 +264,6 @@ export class TasksService {
     const originalStatus = task.status;
 
     if (updateTaskDto.assigneeIds !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       //const oldAssigneeIds = task.assignees.map((a) => a.toString());
 
       const oldAssigneeIds = task.assignees;
@@ -700,8 +699,16 @@ export class TasksService {
         dueDate: { $lt: new Date() },
         status: { $ne: 'Closed' },
         isArchived: false,
+        overdueRemindersSentCount: { $lt: 2 }, // Only tasks that haven't been notified twice
       })
-      .populate('assignees')
+      .populate('assignees owner')
+      .populate({ path: 'assignedTeam', populate: { path: 'members' } })
+      .exec();
+  }
+
+  async incrementOverdueReminderCount(taskId: string): Promise<void> {
+    await this.taskModel
+      .updateOne({ _id: taskId }, { $inc: { overdueRemindersSentCount: 1 } })
       .exec();
   }
 
@@ -716,7 +723,7 @@ export class TasksService {
         status: { $ne: 'Closed' },
         isArchived: false,
       })
-      .populate('assignees')
+      .populate('assignees owner')
       .exec();
   }
 

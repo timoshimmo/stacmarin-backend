@@ -37,6 +37,9 @@ export class TasksScheduler {
         await this.emailService.sendTaskOverdueEmail(email, task.title);
         remindersSent++;
       }
+
+      // Increment the count for this task so it stops after 2 notifications
+      await this.tasksService.incrementOverdueReminderCount(task.id);
     }
 
     // Handle overdue tasks

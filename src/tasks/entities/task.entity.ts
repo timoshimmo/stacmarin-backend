@@ -87,6 +87,8 @@ export class Task extends Document {
 
   @Prop({ default: false }) dueReminderSent: boolean;
 
+  @Prop({ default: 0 }) overdueRemindersSentCount: number;
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   owner: User;
 
