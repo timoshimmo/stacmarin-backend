@@ -267,8 +267,13 @@ export class TasksService {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
       const oldAssigneeIds = task.assignees.map((a) => a.toString());
       const newAssigneeIds = updateTaskDto.assigneeIds;
+
+      console.log(`Old Assignees: ${JSON.stringify(oldAssigneeIds)}`);
+      console.log(`New Assignees: ${JSON.stringify(newAssigneeIds)}`);
       // eslint-disable-next-line prettier/prettier
       const newlyAddedAssignees = newAssigneeIds.filter(id => !oldAssigneeIds.includes(id));
+
+      console.log(`Compare Assignees: ${JSON.stringify(newlyAddedAssignees)}`);
 
       if (newlyAddedAssignees.length > 0) {
         void this.notifyIndividualAssignees(id, newlyAddedAssignees, user.name);
