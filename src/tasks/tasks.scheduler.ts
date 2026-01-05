@@ -61,6 +61,7 @@ export class TasksScheduler {
 
     // Handle tasks due today (In-app + Email)
     const dueTodayTasks = await this.tasksService.findTasksDueToday();
+    console.log(`Due today Tasks ${JSON.stringify(dueTodayTasks)}`);
     for (const task of dueTodayTasks) {
       const recipients = this.getTaskRecipients(task);
 
