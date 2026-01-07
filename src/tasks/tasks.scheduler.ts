@@ -65,6 +65,7 @@ export class TasksScheduler {
     for (const task of dueTodayTasks) {
       const recipients = this.getTaskRecipients(task);
 
+      console.log(`Recipients: ${JSON.stringify(recipients)}`);
       // Send notifications to all collected recipients
       for (const [email, user] of recipients.entries()) {
         // In-app notification
