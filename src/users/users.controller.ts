@@ -39,6 +39,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('profile/:id')
+  getPublicProfile(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
   @Roles(UserRole.ADMIN)
