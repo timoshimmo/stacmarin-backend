@@ -11,6 +11,8 @@ import {
   HttpStatus,
   UseInterceptors,
   UploadedFile,
+  Query,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -20,11 +22,28 @@ import { GetUser } from '../common/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 //import { RolesGuard } from '../auth/guards/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { TasksScheduler } from './tasks.scheduler';
 
 @UseGuards(JwtAuthGuard)
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly tasksScheduler: TasksScheduler,
+  ) {}
+
+  @Post('cron/reminders')
+  @HttpCode(HttpStatus.OK)
+  async triggerCronReminders(@Query('key') key: string) {
+    // Simple protection for the cron endpoint if needed
+    // In a real app, use a secret from environment variables
+    const CRON_SECRET = process.env.CRON_SECRET;
+    if (CRON_SECRET && key !== CRON_SECRET) {
+      throw new UnauthorizedException('Invalid cron key');
+    }
+
+    return await this.tasksScheduler.handleTaskReminders();
+  }
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto, @GetUser() user: User) {

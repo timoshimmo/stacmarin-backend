@@ -323,9 +323,18 @@ export class TasksService {
     if (updateTaskDto.status !== undefined) task.status = updateTaskDto.status;
     if (updateTaskDto.priority !== undefined)
       task.priority = updateTaskDto.priority;
-    if (updateTaskDto.dueDate !== undefined)
-      task.dueDate = new Date(updateTaskDto.dueDate);
-
+    if (updateTaskDto.dueDate !== undefined) {
+      const newDueDate = updateTaskDto.dueDate
+        ? new Date(updateTaskDto.dueDate)
+        : new Date();
+      if (task.dueDate?.getTime() !== newDueDate?.getTime()) {
+        task.dueReminderSent = false;
+        task.dueSoonReminderSent = false; // Reset 24h reminder
+        task.overdueRemindersSentCount = 0; // Reset overdue counter
+      }
+      task.dueDate = newDueDate;
+      //task.dueDate = new Date(updateTaskDto.dueDate);
+    }
     if (updateTaskDto.attachments !== undefined)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       task.attachments = updateTaskDto.attachments;
@@ -426,58 +435,6 @@ export class TasksService {
       );
     }
   }
-
-  /*
-  async addComment(
-    taskId: string,
-    content: string,
-    user: User,
-  ): Promise<Task | null> {
-    const task = await this.taskModel.findById(taskId).exec();
-    if (!task) throw new NotFoundException('Task not found');
-
-    // Ensure we use the correct ID string, handling both POJO (id) and Document (_id)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    const authorId = user.id || (user as any)._id?.toString();
-
-    const comment = {
-      id: new Types.ObjectId().toString(),
-      content,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      author: authorId,
-      timestamp: new Date(),
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    task.comments.push(comment as any);
-    await task.save();
-
-    // Handle Mentions
-    const allUsers = await this.usersService.findAll();
-    const mentions = content.match(/@([\w\s]+)/g);
-
-    if (mentions) {
-      for (const mention of mentions) {
-        const nameToFind = mention.substring(1).trim(); // Remove @
-        // eslint-disable-next-line prettier/prettier
-        const mentionedUser = allUsers.find(u => u.name.toLowerCase() === nameToFind.toLowerCase());
-        if (mentionedUser && mentionedUser.id !== user.id) {
-          await this.notificationsService.create({
-            user: mentionedUser,
-            type: 'mention',
-            message: `${user.name} mentioned you in a comment on "${task.title}"`,
-          });
-        }
-      }
-    }
-  
-    return this.taskModel
-      .findById(taskId)
-      .populate('owner assignees comments.author')
-      .exec();
-  }
-
-  */
 
   async addComment(
     taskId: string,
@@ -722,6 +679,7 @@ export class TasksService {
         dueDate: { $gte: now, $lte: twentyFourHoursFromNow },
         status: { $ne: 'Closed' },
         isArchived: false,
+        //dueSoonReminderSent: false,
       })
       .populate('assignees owner')
       .exec();
@@ -749,6 +707,12 @@ export class TasksService {
   async markDueReminderSent(taskId: string): Promise<void> {
     await this.taskModel
       .updateOne({ _id: taskId }, { $set: { dueReminderSent: true } })
+      .exec();
+  }
+
+  async markDueSoonReminderSent(taskId: string): Promise<void> {
+    await this.taskModel
+      .updateOne({ _id: taskId }, { $set: { dueSoonReminderSent: true } })
       .exec();
   }
 }
