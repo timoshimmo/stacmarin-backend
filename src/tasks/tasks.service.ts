@@ -302,19 +302,20 @@ export class TasksService {
     // Check if team assignment changed
     if (updateTaskDto.assignedTeamId !== undefined) {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      const oldTeamId = task.assignedTeam !== undefined ? task.assignedTeam.id.toString() : null;
+      const oldTeamId = task.assignedTeam !== undefined ? task.assignedTeam?.id.toString() : null;
       const newTeamId = updateTaskDto.assignedTeamId;
 
-      console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam.id)}`);
-
+      if(task.assignedTeam !== undefined) {
+        console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam?.id)}`);
+      }
+      
       console.log(`Old Team ID: ${JSON.stringify(oldTeamId)}`);
       console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
 
       // Correctly handle removal or reassignment
-      if (newTeamId && newTeamId.length > 0) {
+      if (newTeamId && newTeamId.length > 20) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         task.assignedTeam = new Types.ObjectId(newTeamId) as any;
-
 
         // If a new team is assigned (not just cleared), notify everyone on that team
         if (oldTeamId !== newTeamId) {
