@@ -305,6 +305,8 @@ export class TasksService {
       const oldTeamId = task.assignedTeam?.toString();
       const newTeamId = updateTaskDto.assignedTeamId;
 
+      console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam)}`);
+
       console.log(`Old Team ID: ${JSON.stringify(oldTeamId)}`);
       console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
 
