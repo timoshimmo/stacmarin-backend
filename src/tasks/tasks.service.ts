@@ -305,10 +305,14 @@ export class TasksService {
       const oldTeamId = task.assignedTeam?.toString();
       const newTeamId = updateTaskDto.assignedTeamId;
 
+      console.log(`Old Team ID: ${JSON.stringify(oldTeamId)}`);
+      console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
+
       // Correctly handle removal or reassignment
       if (newTeamId && newTeamId.length === 24) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         task.assignedTeam = new Types.ObjectId(newTeamId) as any;
+
 
         // If a new team is assigned (not just cleared), notify everyone on that team
         if (oldTeamId !== newTeamId) {
