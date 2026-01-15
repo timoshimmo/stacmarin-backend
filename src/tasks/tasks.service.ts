@@ -302,10 +302,10 @@ export class TasksService {
     // Check if team assignment changed
     if (updateTaskDto.assignedTeamId !== undefined) {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      const oldTeamId = task.assignedTeam?.toString();
+      const oldTeamId = task.assignedTeam?.id.toString();
       const newTeamId = updateTaskDto.assignedTeamId;
 
-      console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam)}`);
+      console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam.id)}`);
 
       console.log(`Old Team ID: ${JSON.stringify(oldTeamId)}`);
       console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
