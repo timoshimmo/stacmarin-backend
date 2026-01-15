@@ -311,13 +311,15 @@ export class TasksService {
       console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
 
       // Correctly handle removal or reassignment
-      if (newTeamId && newTeamId.length === 24) {
+      if (newTeamId && newTeamId.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         task.assignedTeam = new Types.ObjectId(newTeamId) as any;
 
 
         // If a new team is assigned (not just cleared), notify everyone on that team
         if (oldTeamId !== newTeamId) {
+          console.log(`Compare Data: ${JSON.stringify(newTeamId)} vs ${JSON.stringify(oldTeamId)}`);
+          console.log(`Boolean Result: ${JSON.stringify(oldTeamId !== newTeamId)}`);
           void this.notifyTeamMembers(id, newTeamId, user.name);
         }
       }
