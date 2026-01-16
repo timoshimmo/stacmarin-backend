@@ -336,10 +336,24 @@ export class TasksService {
       const newDueDate = updateTaskDto.dueDate
         ? new Date(updateTaskDto.dueDate)
         : new Date();
-      if (task.dueDate?.getTime() !== newDueDate?.getTime()) {
+
+      const dateChanged = task.dueDate?.getTime() !== newDueDate?.getTime();
+      if (dateChanged) {
         task.dueReminderSent = false;
         task.dueSoonReminderSent = false; // Reset 24h reminder
         task.overdueRemindersSentCount = 0; // Reset overdue counter
+
+        if (newDueDate) {
+          const startOfToday = new Date();
+          startOfToday.setHours(0, 0, 0, 0);
+          const endOfToday = new Date();
+          endOfToday.setHours(23, 59, 59, 999);
+          
+          if (newDueDate >= startOfToday && newDueDate <= endOfToday) {
+            await this.triggerImmediateDueTodayNotification(task);
+            task.dueReminderSent = true; // Prevents cron from double-sending today
+          }
+        }
       }
       task.dueDate = newDueDate;
       //task.dueDate = new Date(updateTaskDto.dueDate);
@@ -372,6 +386,32 @@ export class TasksService {
       .populate('owner assignees comments.author')
       .populate({ path: 'assignedTeam', populate: { path: 'members' } })
       .exec();
+  }
+
+  private async triggerImmediateDueTodayNotification(task: TaskDocument) {
+    try {
+      // Re-populate team members to ensure we have recipients
+      const populatedTask = await this.taskModel.findById(task.id)
+        .populate('owner assignees')
+        .populate({ path: 'assignedTeam', populate: { path: 'members' } })
+        .exec();
+
+      if (!populatedTask) return;
+
+      const recipients = this.getTaskRecipients(populatedTask);
+      for (const [email, user] of recipients.entries()) {
+        await this.notificationsService.create({
+          user: user,
+          type: 'task',
+          message: `Rescheduled: Task "${populatedTask.title}" is now due today!`,
+        });
+        if (email) {
+          await this.emailService.sendTaskDueTodayEmail(email, populatedTask.title);
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send immediate due notification for task ${task.id}:`, error);
+    }
   }
 
   private async notifyIndividualAssignees(
@@ -443,6 +483,38 @@ export class TasksService {
         error,
       );
     }
+  }
+
+  /**
+  * Helper to collect all unique recipients (owner, individual assignees, team members)
+  */
+  private getTaskRecipients(task: any): Map<string, any> {
+    const recipients = new Map<string, any>();
+
+    // Owner
+    if (task.owner && task.owner.email) {
+      recipients.set(task.owner.email, task.owner);
+    }
+
+    // Individual Assignees
+    if (task.assignees?.length > 0) {
+      for (const assignee of task.assignees) {
+        if (assignee.email) {
+          recipients.set(assignee.email, assignee);
+        }
+      }
+    }
+
+    // Team Members
+    if (task.assignedTeam?.members?.length > 0) {
+      for (const member of task.assignedTeam.members) {
+        if (member.email) {
+          recipients.set(member.email, member);
+        }
+      }
+    }
+
+    return recipients;
   }
 
   async addComment(
