@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
   Logger,
+  ConsoleLogger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -491,6 +492,8 @@ export class TasksService {
   private getTaskRecipients(task: any): Map<string, any> {
     const recipients = new Map<string, any>();
 
+    console.log(`Recipients Task: ${JSON.stringify(task)}`);
+
     // Owner
     if (task.owner && task.owner.email) {
       recipients.set(task.owner.email, task.owner);
@@ -513,6 +516,8 @@ export class TasksService {
         }
       }
     }
+
+    console.log(`Recipients List: ${JSON.stringify(recipients)}`);
 
     return recipients;
   }
