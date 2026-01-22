@@ -351,7 +351,7 @@ export class TasksService {
           endOfToday.setHours(23, 59, 59, 999);
           
           if (newDueDate >= startOfToday && newDueDate <= endOfToday) {
-            await this.triggerImmediateDueTodayNotification(task);
+            //await this.triggerImmediateDueTodayNotification(task);
             task.dueReminderSent = true; // Prevents cron from double-sending today
           }
         }
