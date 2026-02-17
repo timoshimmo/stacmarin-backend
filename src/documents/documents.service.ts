@@ -72,6 +72,47 @@ export class DocumentsService {
     }
   }
 
+  async createTemplate(name: string, file: any) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const base64File = file.buffer.toString('base64');
+
+      const payload = {
+        name: name,
+        documents: [
+          {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            name: file.originalname,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            file: base64File,
+          },
+        ],
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.fetchFromDocuseal('/api/v1/templates', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        id: result.id.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        name: result.name,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        description: result.description,
+      };
+    } catch (error) {
+      this.logger.error('Failed to create Docuseal template:', error);
+      throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message || 'Failed to create organization template',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async createSubmission(templateId: string, user: User) {
     try {
       // Create a submission (invitation to sign)
@@ -128,6 +169,54 @@ export class DocumentsService {
           ? error.message
           : 'Failed to prepare signing invitation';
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async uploadAndSign(file: any, user: User) {
+    try {
+      // Docuseal API requires file content as a base64 string
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const base64File = file.buffer.toString('base64');
+
+      // 1. Create a one-off template from the uploaded file
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const templateResponse = await this.fetchFromDocuseal(
+        '/api/v1/templates',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            name: `Sign: ${file.originalname} - ${user.name} (${new Date().toLocaleDateString()})`,
+            documents: [
+              {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                name: file.originalname,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                file: base64File,
+              },
+            ],
+          }),
+        },
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (!templateResponse || !templateResponse.id) {
+        throw new Error('Failed to create temporary signing template');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const templateId = templateResponse.id.toString();
+
+      // 2. Immediately create a submission for the user for this new template
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return this.createSubmission(templateId, user);
+    } catch (error) {
+      this.logger.error('Failed to upload and create submission:', error);
+      throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message || 'Failed to process document upload for signing',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
