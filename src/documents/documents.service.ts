@@ -177,7 +177,7 @@ export class DocumentsService {
       // Docuseal API requires file content as a base64 string
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const base64File = file.buffer.toString('base64');
-
+      console.log('Document Uploaded For Signing');
       // 1. Create a one-off template from the uploaded file
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const templateResponse = await this.fetchFromDocuseal(
