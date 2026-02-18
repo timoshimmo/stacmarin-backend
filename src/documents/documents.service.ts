@@ -54,7 +54,7 @@ export class DocumentsService {
       // In a real multi-tenant scenario, you'd filter templates by tenant tags/ids
       // For now we get all active templates
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const templates = await this.fetchFromDocuseal('/api/v1/templates');
+      const templates = await this.fetchFromDocuseal('/api/templates');
 
       // Map to our simplified frontend format
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -90,7 +90,7 @@ export class DocumentsService {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/v1/templates', {
+      const result = await this.fetchFromDocuseal('/api/templates', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -133,7 +133,7 @@ export class DocumentsService {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/v1/submissions', {
+      const result = await this.fetchFromDocuseal('/api/submissions', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -180,24 +180,21 @@ export class DocumentsService {
       console.log('Document Uploaded For Signing');
       // 1. Create a one-off template from the uploaded file
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const templateResponse = await this.fetchFromDocuseal(
-        '/api/v1/templates',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            name: `Sign: ${file.originalname} - ${user.name} (${new Date().toLocaleDateString()})`,
-            documents: [
-              {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                name: file.originalname,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                file: base64File,
-              },
-            ],
-          }),
-        },
-      );
+      const templateResponse = await this.fetchFromDocuseal('/api/templates', {
+        method: 'POST',
+        body: JSON.stringify({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          name: `Sign: ${file.originalname} - ${user.name} (${new Date().toLocaleDateString()})`,
+          documents: [
+            {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+              name: file.originalname,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              file: base64File,
+            },
+          ],
+        }),
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (!templateResponse || !templateResponse.id) {
