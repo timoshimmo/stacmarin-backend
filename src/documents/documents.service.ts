@@ -122,7 +122,7 @@ export class DocumentsService {
         submitters: [
           {
             email: user.email,
-            role: 'Signer', // Depends on your template role name
+            role: 'First Party', // Depends on your template role name
             name: user.name,
             // Include tenant metadata to ensure multi-tenant isolation tracking
             external_id: user.id.toString(),
