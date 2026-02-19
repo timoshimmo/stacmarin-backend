@@ -165,6 +165,10 @@ export class DocumentsService {
       };
     } catch (error) {
       this.logger.error('Failed to create Docuseal submission:', error);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      console.log('STATUS:', error.response?.status);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      console.log('DATA:', JSON.stringify(error.response?.data, null, 2));
       const errorMessage =
         error instanceof Error
           ? error.message
