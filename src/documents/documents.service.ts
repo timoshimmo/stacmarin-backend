@@ -20,7 +20,7 @@ export class DocumentsService {
     );
     this.docusealApiKey = this.configService.get<string>(
       'DOCUSEAL_API_KEY',
-      'U3SBjvgDkfvADk8UC6P8qni1dVPXrFnneviCqQhWi6M',
+      'b83uXnvoiWLeGkPW53eJCf43xYGuVBeLPPjk297DpsN',
     );
   }
 
