@@ -164,7 +164,10 @@ export class DocumentsService {
         status: 'pending',
       };
     } catch (error) {
-      this.logger.error('Failed to create Docuseal submission:', error);
+      this.logger.error(
+        'Failed to create Docuseal submission:',
+        JSON.stringify(error),
+      );
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       console.log('STATUS:', error.response?.status);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
