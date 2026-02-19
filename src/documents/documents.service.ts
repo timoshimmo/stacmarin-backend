@@ -119,7 +119,7 @@ export class DocumentsService {
       // Docuseal API requires an array of submitters
       const payload = {
         template_id: parseInt(templateId, 10),
-        submitters: [
+        recipients: [
           {
             email: user.email,
             role: 'First Party', // Depends on your template role name
@@ -132,8 +132,9 @@ export class DocumentsService {
         send_email: false, // We will embed it or send custom notification
       };
 
+      //const result = await this.fetchFromDocuseal('/api/submissions', {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/submissions', {
+      const result = await this.fetchFromDocuseal('/api/documents', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
