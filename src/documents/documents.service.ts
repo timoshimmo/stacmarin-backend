@@ -129,7 +129,7 @@ export class DocumentsService {
           },
         ],
         // Configuration for the signing experience
-        send_email: false, // We will embed it or send custom notification
+        send_email: true, // We will embed it or send custom notification
       };
 
       //const result = await this.fetchFromDocuseal('/api/submissions', {
