@@ -16,11 +16,11 @@ export class DocumentsService {
     // DOCUSEAL_URL should be the Render URL of your Docuseal instance
     this.docusealUrl = this.configService.get<string>(
       'DOCUSEAL_BASE_URL',
-      'https://docuseal-n9m2.onrender.com',
+      'https://docuseal-main.onrender.com',
     );
     this.docusealApiKey = this.configService.get<string>(
       'DOCUSEAL_API_KEY',
-      'b83uXnvoiWLeGkPW53eJCf43xYGuVBeLPPjk297DpsN',
+      'TJ8WwCevJbZskvB5Cr1YyWB23CzDUHAvYDxouPbrjVK',
     );
   }
 
@@ -122,7 +122,7 @@ export class DocumentsService {
         submitters: [
           {
             email: user.email,
-            role: 'First Party', // Depends on your template role name
+            role: 'Signer', // Depends on your template role name
             name: user.name,
             // Include tenant metadata to ensure multi-tenant isolation tracking
             external_id: user.id.toString(),
@@ -149,7 +149,8 @@ export class DocumentsService {
 
       // Notify the user in-app
       await this.notificationsService.create({
-        user: user,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: user.id as any,
         type: 'document',
         message: `New document signature requested: Check your Document Signing tab.`,
       });

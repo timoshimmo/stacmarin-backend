@@ -122,7 +122,8 @@ export class TasksService {
         for (const assignee of task.assignees) {
           if (assignee.id.toString() !== user.id) {
             await this.notificationsService.create({
-              user: assignee,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: assignee.id as any,
               type: 'task',
               message: `New task: "${task.title}"`,
             });
@@ -154,8 +155,8 @@ export class TasksService {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           if (member.id.toString() !== user.id && !isIndividualAssignee) {
             await this.notificationsService.create({
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              user: member,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+              user: member.id as any,
               type: 'task',
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               message: `Team Task: "${task.title}" was assigned to ${team.name}`,
@@ -371,7 +372,8 @@ export class TasksService {
         for (const assignee of savedTask.assignees) {
           if (assignee.id.toString() !== user.id) {
             await this.notificationsService.create({
-              user: assignee,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: assignee.id as any,
               type: 'task',
               message: `${user.name} changed the status of "${savedTask.title}" to ${savedTask.status}.`,
             });
@@ -401,8 +403,8 @@ export class TasksService {
       const recipients = this.getTaskRecipients(populatedTask);
       for (const [email, user] of recipients.entries()) {
         await this.notificationsService.create({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+          user: user.id as any,
           type: 'task',
           message: `Rescheduled: Task "${populatedTask.title}" is now due today!`,
         });
@@ -441,7 +443,8 @@ export class TasksService {
           );
         }
         await this.notificationsService.create({
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
+          user: user.id as any,
           type: 'task',
           message: `${assignerName} assigned you to task: "${task.title}"`,
         });
@@ -478,7 +481,8 @@ export class TasksService {
           }
           // Also add in-app notification
           await this.notificationsService.create({
-            user: member,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            user: member.id as any,
             type: 'task',
             message: `${assignerName} assigned your team to task: "${task.title}"`,
           });
@@ -573,7 +577,8 @@ export class TasksService {
         const mentionedUser = allUsers.find(u => u.name.toLowerCase() === nameToFind.toLowerCase());
         if (mentionedUser && mentionedUser.id !== user.id) {
           await this.notificationsService.create({
-            user: mentionedUser,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
+            user: mentionedUser.id as any,
             type: 'mention',
             message: `${user.name} mentioned you in a comment on "${task.title}"`,
           });
@@ -693,7 +698,8 @@ export class TasksService {
     for (const assignee of task.assignees) {
       // Create notification
       await this.notificationsService.create({
-        user: assignee,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: assignee.id as any,
         type: 'task',
         message: `Reminder: Please check task "${task.title}". Sent by ${user.name}.`,
       });

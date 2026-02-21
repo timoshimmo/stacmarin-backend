@@ -39,7 +39,8 @@ export class RecognitionService {
     // Notify the recipient
     if (recipient.id !== sender.id) {
       await this.notificationsService.create({
-        user: recipient,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: recipient.id,
         type: 'kudos',
         message: `You received new kudos from an anonymous colleague!`,
       });
