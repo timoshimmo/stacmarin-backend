@@ -187,29 +187,36 @@ export class DocumentsService {
     }
   }
 
-  async uploadAndSign(file: any, user: User) {
+  uploadAndSign(file: any, user: User) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const base64File = file.buffer.toString('base64');
-      
+
       // Generate a builder token for the uploaded document
-      const token = jwt.sign({
-        user_email: user.email,
-        integration_email: user.email,
-        external_id: `QuickSign_${Date.now()}`,
-        name: `Quick Sign: ${file.originalname}`,
-        document_base64: base64File,
-      }, this.docusealApiKey);
+      const token = jwt.sign(
+        {
+          user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
+          integration_email: user.email, //Email of the user to create a template for.
+          external_id: `QuickSign_${Date.now()}`,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          name: `STAC Marine: Offshore ${file.originalname}`,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          document_base64: base64File,
+        },
+        this.docusealApiKey,
+      );
 
       return { token };
     } catch (error) {
       this.logger.error('Failed to generate Docuseal builder token:', error);
       throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         error.message || 'Failed to process document for builder',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-  
+
   /*
   async uploadAndSign(file: any, user: User) {
     try {
