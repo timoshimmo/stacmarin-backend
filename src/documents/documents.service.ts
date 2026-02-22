@@ -183,67 +183,23 @@ export class DocumentsService {
 
   async uploadAndSign(file: any, user: User) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const base64File = file.buffer.toString('base64');
-
-      const payload = {
-        template: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          name: `Quick Sign: ${file.originalname}`,
-          documents: [
-            {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-              name: file.originalname,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              file: base64File,
-            },
-          ],
-        },
-        submitters: [
-          {
-            email: user.email,
-            role: 'Signer',
-            name: user.name,
-            external_id: user.id.toString(),
-          },
-        ],
-        send_email: false,
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/submissions', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const submission = Array.isArray(result) ? result[0] : result;
-
-      if (!submission) {
-        throw new Error('No submission returned from signature service');
-      }
-
-      await this.notificationsService.create({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        user: user.id as any,
-        type: 'document',
-        message: `Action Required: New document signature requested.`,
-      });
-
-      return {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        id: submission.id.toString(),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        slug: submission.slug,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        url: submission.url,
-        status: 'pending',
-      };
+      // 1. Create a permanent template first
+      const template = await this.createTemplate(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Quick Sign: ${file.originalname}`,
+        file,
+      );
+      // 2. Create a submission for this new template
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      return this.createSubmission(template.id, user);
     } catch (error) {
-      this.logger.error('Failed to upload and create submission:', error);
+      this.logger.error(
+        'Failed to upload, create template and submission:',
+        error,
+      );
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        error.message || 'Failed to process document upload for signing',
+        error.message || 'Failed to process document for signing',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
