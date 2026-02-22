@@ -2,6 +2,7 @@ import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class DocumentsService {
@@ -90,7 +91,7 @@ export class DocumentsService {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/v1/templates', {
+      const result = await this.fetchFromDocuseal('/api/templates', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -188,28 +189,27 @@ export class DocumentsService {
 
   async uploadAndSign(file: any, user: User) {
     try {
-      // 1. Create a permanent template first
-      const template = await this.createTemplate(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `Quick Sign: ${file.originalname}`,
-        file,
-      );
-      // 2. Create a submission for this new template
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      return this.createSubmission(template.id, user);
+      const base64File = file.buffer.toString('base64');
+      
+      // Generate a builder token for the uploaded document
+      const token = jwt.sign({
+        user_email: user.email,
+        integration_email: user.email,
+        external_id: `QuickSign_${Date.now()}`,
+        name: `Quick Sign: ${file.originalname}`,
+        document_base64: base64File,
+      }, this.docusealApiKey);
+
+      return { token };
     } catch (error) {
-      this.logger.error(
-        'Failed to upload, create template and submission:',
-        error,
-      );
+      this.logger.error('Failed to generate Docuseal builder token:', error);
       throw new HttpException(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        error.message || 'Failed to process document for signing',
+        error.message || 'Failed to process document for builder',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
-
+  
   /*
   async uploadAndSign(file: any, user: User) {
     try {
