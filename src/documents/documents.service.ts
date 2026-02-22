@@ -95,6 +95,8 @@ export class DocumentsService {
         body: JSON.stringify(payload),
       });
 
+      console.log(`Template Result`, JSON.stringify(result, null, 2));
+
       return {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         id: result.id.toString(),
@@ -104,7 +106,10 @@ export class DocumentsService {
         description: result.description,
       };
     } catch (error) {
-      this.logger.error('Failed to create Docuseal template:', error);
+      this.logger.error(
+        'Failed to create Docuseal template:',
+        JSON.stringify(error),
+      );
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         error.message || 'Failed to create organization template',
