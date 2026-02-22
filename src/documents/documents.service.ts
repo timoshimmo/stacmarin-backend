@@ -90,7 +90,7 @@ export class DocumentsService {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/templates', {
+      const result = await this.fetchFromDocuseal('/api/v1/templates', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
