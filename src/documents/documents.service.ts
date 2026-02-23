@@ -192,29 +192,30 @@ export class DocumentsService {
     }
   }
 
-  async uploadAndSign(file: any, user: User) {
+  uploadAndSign(file: any, user: User) {
     try {
       //const base64File = file.buffer.toString('base64');
-      const template = await this.createTemplate(
+      /*const template = await this.createTemplate(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `Quick Sign: ${file.originalname}`,
         file,
       );
-
+      */
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
           user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
           integration_email: user.email, //Email of the user to create a template for.
           external_id: `QuickSign_${Date.now()}`,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          template_id: parseInt(template.id, 10),
+          template_id: 2,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           name: `STAC Marine: Offshore ${file.originalname}`,
           iat: Math.floor(Date.now() / 1000),
         },
         this.docusealApiKey,
       );
+
+      //document_url: ['https://stacmarine.com/documents/STAC_Marine_LetterHead.pdf]
 
       const host = this.docusealUrl;
 
