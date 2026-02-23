@@ -212,6 +212,7 @@ export class DocumentsService {
           name: `STAC Marine Offshore ${file.originalname}`,
         },
         this.docusealApiKey,
+        { algorithm: 'HS256' },
       );
 
       //document_url: ['https://stacmarine.com/documents/STAC_Marine_LetterHead.pdf]
