@@ -204,7 +204,7 @@ export class DocumentsService {
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
-          user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
+          user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
           integration_email: user.email, //Email of the user to create a template for.
           external_id: `QuickSign_${Date.now()}`,
           template_id: 2,
