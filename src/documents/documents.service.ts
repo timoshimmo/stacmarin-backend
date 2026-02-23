@@ -219,6 +219,7 @@ export class DocumentsService {
       const host = this.docusealUrl;
 
       this.logger.log(`Generated builder token for host: ${host}`);
+      this.logger.log(`Builder token: ${token}`);
 
       return {
         token,
