@@ -80,6 +80,7 @@ export class DocumentsService {
 
       const payload = {
         name: name,
+        roles: [{ name: 'Signer' }],
         documents: [
           {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
