@@ -204,9 +204,8 @@ export class DocumentsService {
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
-          user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
-          integration_email: user.email, //Email of the user to create a template for.
-          template_id: 2,
+          user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
+          template_id: 1,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           name: `STAC Marine Offshore ${file.originalname}`,
         },
@@ -222,6 +221,7 @@ export class DocumentsService {
         `Generated builder token for API Key: ${this.docusealApiKey}`,
       );
       this.logger.log(`Builder token: ${token}`);
+      this.logger.log(`Logged Email: ${user.email}`);
 
       return {
         token,
