@@ -206,7 +206,14 @@ export class DocumentsService {
         this.docusealApiKey,
       );
 
-      return { token };
+      const host = this.docusealUrl;
+
+      this.logger.log(`Generated builder token for host: ${host}`);
+
+      return {
+        token,
+        host,
+      };
     } catch (error) {
       this.logger.error('Failed to generate Docuseal builder token:', error);
       throw new HttpException(
