@@ -75,8 +75,9 @@ export class DocumentsService {
 
   async createTemplate(name: string, file: any) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const base64File = file.buffer.toString('base64');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const base64File = `data:application/pdf;base64,${file.buffer.toString('base64')}`;
+      //const base64File = file.buffer.toString('base64');
 
       const payload = {
         name: name,
@@ -85,7 +86,6 @@ export class DocumentsService {
           {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             name: file.originalname,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             file: base64File,
           },
         ],
@@ -108,10 +108,14 @@ export class DocumentsService {
         description: result.description,
       };
     } catch (error) {
-      this.logger.error(
-        'Failed to create Docuseal template:',
-        JSON.stringify(error),
-      );
+      this.logger.error('Failed to create Docuseal template:', {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        message: error.message,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        response: error.response?.data, // If using axios/similar
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        stack: error.stack,
+      });
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         error.message || 'Failed to create organization template',
