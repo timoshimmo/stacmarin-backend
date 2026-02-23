@@ -206,7 +206,6 @@ export class DocumentsService {
         {
           user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
           integration_email: user.email, //Email of the user to create a template for.
-          external_id: `QuickSign_${Date.now()}`,
           template_id: 2,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           name: `STAC Marine Offshore ${file.originalname}`,
@@ -219,7 +218,9 @@ export class DocumentsService {
 
       const host = this.docusealUrl;
 
-      this.logger.log(`Generated builder token for host: ${host}`);
+      this.logger.log(
+        `Generated builder token for API Key: ${this.docusealApiKey}`,
+      );
       this.logger.log(`Builder token: ${token}`);
 
       return {
