@@ -187,10 +187,14 @@ export class DocumentsService {
     }
   }
 
-  uploadAndSign(file: any, user: User) {
+  async uploadAndSign(file: any, user: User) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const base64File = file.buffer.toString('base64');
+      //const base64File = file.buffer.toString('base64');
+      const template = await this.createTemplate(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `Quick Sign: ${file.originalname}`,
+        file,
+      );
 
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
@@ -198,10 +202,11 @@ export class DocumentsService {
           user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
           integration_email: user.email, //Email of the user to create a template for.
           external_id: `QuickSign_${Date.now()}`,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          template_id: parseInt(template.id, 10),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           name: `STAC Marine: Offshore ${file.originalname}`,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          document_base64: base64File,
+          iat: Math.floor(Date.now() / 1000),
         },
         this.docusealApiKey,
       );
