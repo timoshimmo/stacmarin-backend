@@ -209,8 +209,7 @@ export class DocumentsService {
           external_id: `QuickSign_${Date.now()}`,
           template_id: 2,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          name: `STAC Marine: Offshore ${file.originalname}`,
-          iat: Math.floor(Date.now() / 1000),
+          name: `STAC Marine Offshore ${file.originalname}`,
         },
         this.docusealApiKey,
       );
