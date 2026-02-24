@@ -205,7 +205,7 @@ export class DocumentsService {
       const token = jwt.sign(
         {
           user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
-          template_id: 2,
+          template_id: 2927236,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
           name: file.originalname,
         },
