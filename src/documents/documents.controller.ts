@@ -44,7 +44,7 @@ export class DocumentsController {
 
   @Post('upload-sign')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadAndSign(@GetUser() user: User, @UploadedFile() file: any) {
+  uploadAndSign(@GetUser() user: User, @UploadedFile() file: any) {
     return this.documentsService.uploadAndSign(file, user);
   }
 }

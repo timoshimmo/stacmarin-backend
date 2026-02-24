@@ -209,7 +209,7 @@ export class DocumentsService {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           name: `STAC Marine Offshore ${file.originalname}`,
         },
-        this.docusealApiKey,
+        this.docusealApiKey.trim(),
         { algorithm: 'HS256' },
       );
 
