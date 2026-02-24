@@ -192,24 +192,25 @@ export class DocumentsService {
     }
   }
 
-  uploadAndSign(file: any, user: User) {
+  async uploadAndSign(file: any, user: User) {
     try {
       //const base64File = file.buffer.toString('base64');
-      /*const template = await this.createTemplate(
+      const template = await this.createTemplate(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `Quick Sign: ${file.originalname}`,
+        `Quick Sign - ${file.originalname}`,
         file,
       );
-      */
+
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
           user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
-          template_id: 2927236,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+          template_id: parseInt(template.id, 10), // The template we just created
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
           name: file.originalname,
         },
-        'U3SBjvgDkfvADk8UC6P8qni1dVPXrFnneviCqQhWi6M',
+        this.docusealApiKey,
         { algorithm: 'HS256' },
       );
 
