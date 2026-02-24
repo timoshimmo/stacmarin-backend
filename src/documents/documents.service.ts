@@ -204,12 +204,12 @@ export class DocumentsService {
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
-          user_email: 'tokmangwang@gmail.com', //Email of the owner of the API signing key - admin user email.
-          template_id: 1,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          name: `STAC Marine Offshore ${file.originalname}`,
+          user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
+          template_id: 2,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+          name: file.originalname,
         },
-        this.docusealApiKey.trim(),
+        'U3SBjvgDkfvADk8UC6P8qni1dVPXrFnneviCqQhWi6M',
         { algorithm: 'HS256' },
       );
 
