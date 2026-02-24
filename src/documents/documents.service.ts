@@ -215,7 +215,7 @@ export class DocumentsService {
 
       //document_url: ['https://stacmarine.com/documents/STAC_Marine_LetterHead.pdf]
 
-      const host = this.docusealUrl;
+      const host = 'docuseal-main.onrender.com';
 
       this.logger.log(
         `Generated builder token for API Key: ${this.docusealApiKey}`,
