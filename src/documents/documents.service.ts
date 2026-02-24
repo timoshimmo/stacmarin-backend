@@ -75,24 +75,25 @@ export class DocumentsService {
 
   async createTemplate(name: string, file: any) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const base64File = `data:application/pdf;base64,${file.buffer.toString('base64')}`;
-      //const base64File = file.buffer.toString('base64');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      const base64File = file.buffer.toString('base64');
+
+      //const base64File = `data:application/pdf;base64,${file.buffer.toString('base64')}`;
 
       const payload = {
         name: name,
-        roles: [{ name: 'Signer' }],
         documents: [
           {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             name: file.originalname,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             file: base64File,
           },
         ],
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/templates', {
+      const result = await this.fetchFromDocuseal('/templates/pdf', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -100,8 +101,8 @@ export class DocumentsService {
       console.log(`Template Result`, JSON.stringify(result, null, 2));
 
       return {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        id: result.id.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        id: result.id,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         name: result.name,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
