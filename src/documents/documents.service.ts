@@ -55,7 +55,7 @@ export class DocumentsService {
       // In a real multi-tenant scenario, you'd filter templates by tenant tags/ids
       // For now we get all active templates
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const templates = await this.fetchFromDocuseal('/api/templates');
+      const templates = await this.fetchFromDocuseal('/templates');
 
       // Map to our simplified frontend format
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
@@ -77,6 +77,8 @@ export class DocumentsService {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       const base64File = file.buffer.toString('base64');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const filename = file.originalname.toLowerCase();
 
       //const base64File = `data:application/pdf;base64,${file.buffer.toString('base64')}`;
 
@@ -92,8 +94,22 @@ export class DocumentsService {
         ],
       };
 
+      // Determine endpoint based on file extension
+      let endpoint = '/templates/pdf';
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      if (filename.endsWith('.docx')) {
+        endpoint = '/templates/docx';
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      } else if (filename.endsWith('.pdf')) {
+        endpoint = '/templates/pdf';
+      } else {
+        // Default to PDF or let Docuseal handle it if possible,
+        // but usually it's one of these two for templates.
+        endpoint = '/templates/pdf';
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/templates/pdf', {
+      const result = await this.fetchFromDocuseal(endpoint, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -146,7 +162,7 @@ export class DocumentsService {
 
       //const result = await this.fetchFromDocuseal('/api/submissions', {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/api/submissions', {
+      const result = await this.fetchFromDocuseal('/submissions', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
