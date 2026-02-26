@@ -17,7 +17,7 @@ export class DocumentsService {
     // DOCUSEAL_URL should be the Render URL of your Docuseal instance
     this.docusealUrl = this.configService.get<string>(
       'DOCUSEAL_BASE_URL',
-      'https://docuseal-main.onrender.com',
+      'https://api.docuseal.com',
     );
     this.docusealApiKey = this.configService.get<string>(
       'DOCUSEAL_API_KEY',
@@ -79,6 +79,7 @@ export class DocumentsService {
       const result = await this.fetchFromDocuseal('/submissions');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const submissionList = Array.isArray(result) ? result : result.data || [];
+      const host = this.getDocusealHost();
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return submissionList.map((s) => ({
@@ -94,10 +95,26 @@ export class DocumentsService {
         template_name: s.template_name || 'Document',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         created_at: s.created_at,
+        host: host,
       }));
     } catch (error) {
       this.logger.error('Failed to fetch submissions from Docuseal:', error);
       return [];
+    }
+  }
+
+  private getDocusealHost(): string | undefined {
+    try {
+      const host = new URL(this.docusealUrl).host;
+      // If it's docuseal.com or api.docuseal.com, we return undefined
+      // so the React components use their default cloud host (docuseal.com)
+      if (host.includes('docuseal.com')) {
+        return undefined;
+      }
+      return host;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      return undefined;
     }
   }
 
