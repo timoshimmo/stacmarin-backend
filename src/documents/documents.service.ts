@@ -92,7 +92,7 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         status: s.status || 'pending',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        template_name: s.template_name || 'Document',
+        template_name: s.template?.name || s.template_name || 'Document',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         created_at: s.created_at,
         host: host,
