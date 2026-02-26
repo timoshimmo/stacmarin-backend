@@ -26,6 +26,12 @@ export class DocumentsController {
     return this.documentsService.getTemplates();
   }
 
+  @Get('submissions')
+  async getSubmissions() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.documentsService.getSubmissions();
+  }
+
   @Post('templates')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)

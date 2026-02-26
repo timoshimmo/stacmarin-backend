@@ -73,6 +73,34 @@ export class DocumentsService {
     }
   }
 
+  async getSubmissions() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.fetchFromDocuseal('/submissions');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const submissionList = Array.isArray(result) ? result : result.data || [];
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return submissionList.map((s) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        id: s.id.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        slug: s.slug,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        url: s.url,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        status: s.status || 'pending',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        template_name: s.template_name || 'Document',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        created_at: s.created_at,
+      }));
+    } catch (error) {
+      this.logger.error('Failed to fetch submissions from Docuseal:', error);
+      return [];
+    }
+  }
+
   async createTemplate(name: string, file: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -140,6 +168,33 @@ export class DocumentsService {
       );
     }
   }
+
+  /*
+  private async uploadToCpanel(file: any): Promise<string> {
+    // Placeholder for cPanel upload logic.
+    // Replace this with your actual cPanel upload implementation (e.g., FTP or API call).
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    this.logger.log(`Uploading ${file.originalname} to cPanel placeholder...`);
+
+    // Example: Return a URL where the file would be accessible after upload
+    const cpanelDomain = 'https://your-cpanel-domain.com';
+    const uploadDirectory = '/documents/signing';
+    const timestamp = Date.now();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    const sanitizedFilename = file.originalname.replace(/\s+/g, '_');
+
+    const fileUrl = `${cpanelDomain}${uploadDirectory}/${timestamp}_${sanitizedFilename}`;
+
+    this.logger.log(`File placeholder URL: ${fileUrl}`);
+
+    // In a real implementation, you would perform the actual file transfer here:
+    // 1. Using FTP (requires basic-ftp package)
+    // 2. Using a custom PHP upload script on cPanel via POST request
+
+    return fileUrl;
+  }
+
+  */
 
   async createSubmission(templateId: string, user: User) {
     try {
@@ -218,6 +273,8 @@ export class DocumentsService {
         file,
       );
 
+      //const cpanelUrl = await this.uploadToCpanel(file);
+
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
@@ -226,6 +283,7 @@ export class DocumentsService {
           template_id: parseInt(template.id, 10), // The template we just created
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
           name: file.originalname,
+          // document_urls: [cpanelUrl], // Added document_urls as requested
         },
         this.docusealApiKey,
         { algorithm: 'HS256' },
