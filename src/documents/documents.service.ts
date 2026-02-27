@@ -286,7 +286,7 @@ export class DocumentsService {
       //const base64File = file.buffer.toString('base64');
       const template = await this.createTemplate(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        `Quick Sign - ${file.originalname}`,
+        `${file.originalname}`,
         file,
       );
 
@@ -308,7 +308,7 @@ export class DocumentsService {
 
       //document_url: ['https://stacmarine.com/documents/STAC_Marine_LetterHead.pdf]
 
-      const host = 'docuseal-main.onrender.com';
+      const host = 'https://api.docuseal.com';
 
       this.logger.log(
         `Generated builder token for API Key: ${this.docusealApiKey}`,
