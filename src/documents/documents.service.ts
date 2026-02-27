@@ -73,6 +73,7 @@ export class DocumentsService {
     }
   }
 
+  /*
   async getSubmissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -102,6 +103,22 @@ export class DocumentsService {
       return [];
     }
   }
+*/
+  async getSubmissions() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.fetchFromDocuseal('/submissions');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const submissionList = Array.isArray(result) ? result : result.data || [];
+      const host = 'docuseal.com';
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return submissionList.map((s) => this.mapSubmission(s, host));
+    } catch (error) {
+      this.logger.error('Failed to fetch submissions from Docuseal:', error);
+      return [];
+    }
+  }
 
   private getDocusealHost(): string | undefined {
     try {
@@ -116,6 +133,38 @@ export class DocumentsService {
     } catch (e) {
       return undefined;
     }
+  }
+
+  private mapSubmission(s: any, host: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const firstSubmitter = s.submitters?.[0];
+    // Use the signing URL from the submission or the first submitter
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    let signingUrl = s.url || firstSubmitter?.url;
+
+    // If no URL, construct it using the submitter slug (preferred) or submission slug
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (!signingUrl && (firstSubmitter?.slug || s.slug)) {
+      const displayHost = host || 'docuseal.com';
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      signingUrl = `https://${displayHost}/s/${firstSubmitter?.slug || s.slug}`;
+    }
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      id: s.id.toString(),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      slug: s.slug,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      url: signingUrl,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      status: s.status || 'pending',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      template_name: s.template?.name || s.template_name || 'Document',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      created_at: s.created_at,
+      host: host,
+    };
   }
 
   async createTemplate(name: string, file: any) {
