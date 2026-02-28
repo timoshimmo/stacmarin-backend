@@ -139,8 +139,24 @@ export class DocumentsService {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const firstSubmitter = s.submitters?.[0];
     // Use the signing URL from the submission or the first submitter
+    // let signingUrl = s.url || firstSubmitter?.url;
+    const displayHost = 'docuseal.com';
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    let signingUrl = s.url || firstSubmitter?.url;
+    const templateSlug = s.template?.slug || s.template_slug;
+
+    console.log(`Template Slug: ${templateSlug}`);
+
+    // Use the template signing URL format as requested: https://docuseal.com/d/{slug}
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-member-access
+    let signingUrl = templateSlug ? `https://${displayHost}/d/${templateSlug}` : s.url || firstSubmitter?.url;
+
+    // Fallback logic if template slug is not available
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (!signingUrl && (firstSubmitter?.slug || s.slug)) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      signingUrl = `https://${displayHost}/s/${firstSubmitter?.slug || s.slug}`;
+    }
 
     // If no URL, construct it using the submitter slug (preferred) or submission slug
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
