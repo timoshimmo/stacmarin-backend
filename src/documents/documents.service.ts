@@ -227,6 +227,8 @@ export class DocumentsService {
           status: sub.status,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           url: sub.url,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          slug: sub.slug,
         })) || [],
     };
   }
