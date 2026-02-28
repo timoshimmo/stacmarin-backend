@@ -73,7 +73,7 @@ export class DocumentsService {
     }
   }
 
-  /*
+  /* version 1
   async getSubmissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -104,6 +104,8 @@ export class DocumentsService {
     }
   }
 */
+
+  /* Version 2
   async getSubmissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -114,6 +116,43 @@ export class DocumentsService {
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       return submissionList.map((s) => this.mapSubmission(s, host));
+    } catch (error) {
+      this.logger.error('Failed to fetch submissions from Docuseal:', error);
+      return [];
+    }
+  }
+
+  */
+
+  async getSubmissions() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const [submissionsResult, templatesResult] = await Promise.all([
+        this.fetchFromDocuseal('/submissions'),
+        this.fetchFromDocuseal('/templates'),
+      ]);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-member-access
+      const submissionList = Array.isArray(submissionsResult) ? submissionsResult : submissionsResult.data || [];
+      // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const templateList = Array.isArray(templatesResult) ? templatesResult : templatesResult.data || [];
+
+      // Create a map of template_id to slug for efficient lookup
+      const templateMap = new Map();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      templateList.forEach((t) => templateMap.set(t.id, t.slug));
+
+      const host = this.getDocusealHost();
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      return submissionList.map((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const templateId = s.template?.id || s.template_id;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const templateSlug = templateMap.get(templateId);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return this.mapSubmission(s, host, templateSlug);
+      });
     } catch (error) {
       this.logger.error('Failed to fetch submissions from Docuseal:', error);
       return [];
@@ -135,33 +174,29 @@ export class DocumentsService {
     }
   }
 
-  private mapSubmission(s: any, host: string) {
+  private mapSubmission(
+    s: any,
+    host: string | undefined,
+    templateSlug?: string,
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const firstSubmitter = s.submitters?.[0];
     // Use the signing URL from the submission or the first submitter
     // let signingUrl = s.url || firstSubmitter?.url;
     const displayHost = 'docuseal.com';
+    const finalTemplateSlug = templateSlug;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const templateSlug = s.template?.slug || s.template_slug;
+    //const templateSlug = s.template?.slug || s.template_slug;
 
-    console.log(`Template Slug: ${templateSlug}`);
+    console.log(`Template Slug: ${finalTemplateSlug}`);
 
     // Use the template signing URL format as requested: https://docuseal.com/d/{slug}
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-member-access
-    let signingUrl = templateSlug ? `https://${displayHost}/d/${templateSlug}` : s.url || firstSubmitter?.url;
+    let signingUrl = finalTemplateSlug ? `https://${displayHost}/d/${finalTemplateSlug}` : s.url || firstSubmitter?.url;
 
     // Fallback logic if template slug is not available
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (!signingUrl && (firstSubmitter?.slug || s.slug)) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      signingUrl = `https://${displayHost}/s/${firstSubmitter?.slug || s.slug}`;
-    }
-
-    // If no URL, construct it using the submitter slug (preferred) or submission slug
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (!signingUrl && (firstSubmitter?.slug || s.slug)) {
-      const displayHost = host || 'docuseal.com';
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       signingUrl = `https://${displayHost}/s/${firstSubmitter?.slug || s.slug}`;
     }
