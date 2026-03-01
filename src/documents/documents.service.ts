@@ -73,39 +73,7 @@ export class DocumentsService {
     }
   }
 
-  /* version 1
-  async getSubmissions() {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/submissions');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const submissionList = Array.isArray(result) ? result : result.data || [];
-      const host = this.getDocusealHost();
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return submissionList.map((s) => ({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        id: s.id.toString(),
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        slug: s.slug,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        url: s.url,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        status: s.status || 'pending',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        template_name: s.template?.name || s.template_name || 'Document',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        created_at: s.created_at,
-        host: host,
-      }));
-    } catch (error) {
-      this.logger.error('Failed to fetch submissions from Docuseal:', error);
-      return [];
-    }
-  }
-*/
-
-  /* Version 2
+  /* Version 1
   async getSubmissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -124,6 +92,7 @@ export class DocumentsService {
 
   */
 
+  /* Version 2 with template slug mapping and improved signing URL logic
   async getSubmissions() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -151,6 +120,72 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const templateSlug = templateMap.get(templateId);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return this.mapSubmission(s, host, templateSlug);
+      });
+    } catch (error) {
+      this.logger.error('Failed to fetch submissions from Docuseal:', error);
+      return [];
+    }
+  }
+*/
+
+  async getSubmissions() {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const submissionsResult = await this.fetchFromDocuseal('/submissions');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-member-access
+      const submissionList = Array.isArray(submissionsResult) ? submissionsResult : (submissionsResult.data || []);
+
+      // Extract unique template IDs from the submissions
+      // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const templateIds: number[] = Array.from(new Set(submissionList.map(s => (s.template?.id || s.template_id) as number).filter(id => !!id)));
+      // eslint-disable-next-line prettier/prettier
+      
+      // Fetch template details for these IDs to get their slugs
+      const templateMap = new Map<number, string>();
+      await Promise.all(
+        templateIds.map(async (id: number) => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const template = await this.fetchFromDocuseal(`/templates/${id}`);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (template?.slug) {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+              templateMap.set(id, template.slug);
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
+            this.logger.warn(
+              `Could not fetch template ${id} details for slug mapping`,
+            );
+          }
+        }),
+      );
+
+      const host = this.getDocusealHost();
+
+      // Fetch full details for each submission to get external_id
+      // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const fullSubmissions = await Promise.all(submissionList.map(async (s: any) => {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+            return await this.fetchFromDocuseal(`/submissions/${s.id}`);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
+            this.logger.warn(
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              `Could not fetch full details for submission ${s.id}`,
+            );
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return s;
+          }
+        }),
+      );
+
+      return fullSubmissions.map((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const templateId = (s.template?.id || s.template_id) as number;
+        const templateSlug = templateMap.get(templateId);
         return this.mapSubmission(s, host, templateSlug);
       });
     } catch (error) {
@@ -229,6 +264,8 @@ export class DocumentsService {
           url: sub.url,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           slug: sub.slug,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          external_id: sub.external_id,
         })) || [],
     };
   }
