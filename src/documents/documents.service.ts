@@ -182,6 +182,10 @@ export class DocumentsService {
         }),
       );
 
+      console.log(
+        `FULL SUBMISSION: ${JSON.stringify(fullSubmissions, null, 2)}`,
+      );
+
       return fullSubmissions.map((s) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const templateId = (s.template?.id || s.template_id) as number;
