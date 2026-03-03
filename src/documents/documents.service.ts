@@ -345,6 +345,33 @@ export class DocumentsService {
     }
   }
 
+  async getTemplateDetails(id: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const template = await this.fetchFromDocuseal(`/templates/${id}`);
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        id: template.id.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        name: template.name,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        slug: template.slug,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        description: template.description,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        roles: template.roles || [{ name: 'Signer' }], // Default to 'Signer' if no roles defined
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        schema: template.schema,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch template ${id} details:`, error);
+      throw new HttpException(
+        'Failed to fetch template details',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
   async createTemplate(name: string, file: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -440,6 +467,7 @@ export class DocumentsService {
 
   */
 
+  /*
   async createSubmission(templateId: string, user: User) {
     try {
       // Create a submission (invitation to sign)
@@ -507,6 +535,93 @@ export class DocumentsService {
       throw new HttpException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  */
+
+  async createSubmission(templateId: string, user: User, body?: any) {
+    try {
+      let payload: any;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (body && body.submitters) {
+        // Flexible submission from our own UI
+        payload = {
+          template_id: parseInt(templateId, 10),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          submitters: body.submitters,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          order: body.order || 'random',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          send_email: body.send_email !== undefined ? body.send_email : true,
+        };
+      } else {
+        // Default quick sign logic
+        payload = {
+          template_id: parseInt(templateId, 10),
+          submitters: [
+            {
+              email: user.email,
+              role: 'Signer',
+              name: user.name,
+              external_id: user.id.toString(),
+            },
+          ],
+          send_email: false,
+        };
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.fetchFromDocuseal('/submissions', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const submission = Array.isArray(result) ? result[0] : result;
+
+      if (!submission) {
+        throw new Error('No submission returned from signature service');
+      }
+
+      await this.notificationsService.create({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: user.id as any,
+        type: 'document',
+        message: `Action Required: New document signature requested.`,
+      });
+
+      const host = this.getDocusealHost();
+
+      // Fetch template details using the ID from the submission response to get the slug
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, prettier/prettier
+      const templateIdFromSubmission = (submission.template?.id || submission.template_id) as number;
+      let templateSlug: string | undefined;
+
+      if (templateIdFromSubmission) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const template = await this.fetchFromDocuseal(
+            `/templates/${templateIdFromSubmission}`,
+          );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          templateSlug = template?.slug;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          this.logger.warn(
+            `Could not fetch template ${templateIdFromSubmission} details for slug mapping`,
+          );
+        }
+      }
+
+      return this.mapSubmission(submission, host, templateSlug);
+    } catch (error) {
+      this.logger.error('Failed to create Docuseal submission:', error);
+      throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message || 'Failed to prepare signing invitation',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   async uploadAndSign(file: any, user: User) {
     try {
@@ -546,6 +661,8 @@ export class DocumentsService {
       return {
         token,
         host,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        templateId: template.id,
       };
     } catch (error) {
       this.logger.error('Failed to generate Docuseal builder token:', error);

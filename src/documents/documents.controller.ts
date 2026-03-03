@@ -56,6 +56,11 @@ export class DocumentsController {
     return this.documentsService.createTemplate(name, file);
   }
 
+  @Get('templates/:id')
+  async getTemplateDetails(@Param('id') id: string) {
+    return this.documentsService.getTemplateDetails(id);
+  }
+
   @Post('sign')
   async createSignatureSubmission(
     @GetUser() user: User,
