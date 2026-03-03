@@ -276,6 +276,75 @@ export class DocumentsService {
     };
   }
 
+  async getSubmissionDetails(id: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const submission = await this.fetchFromDocuseal(`/submissions/${id}`);
+      const host = this.getDocusealHost();
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, prettier/prettier
+      const templateId = (submission.template?.id || submission.template_id) as number;
+      let templateSlug: string | undefined;
+
+      if (templateId) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const template = await this.fetchFromDocuseal(
+            `/templates/${templateId}`,
+          );
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          templateSlug = template?.slug;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+          /* empty */
+        }
+      }
+
+      return this.mapSubmission(submission, host, templateSlug);
+    } catch (error) {
+      this.logger.error(`Failed to fetch submission ${id} details:`, error);
+      throw new HttpException(
+        'Failed to fetch submission details',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async resendSubmitterEmail(submitterId: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.fetchFromDocuseal(`/submitters/${submitterId}/emails`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to resend email for submitter ${submitterId}:`,
+        error,
+      );
+      throw new HttpException(
+        'Failed to resend email',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getSubmitterSignUrl(submitterId: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const submitter = await this.fetchFromDocuseal(
+        `/submitters/${submitterId}`,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      return { url: submitter.url };
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch sign URL for submitter ${submitterId}:`,
+        error,
+      );
+      throw new HttpException('Failed to fetch sign URL', HttpStatus.NOT_FOUND);
+    }
+  }
+
   async createTemplate(name: string, file: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment

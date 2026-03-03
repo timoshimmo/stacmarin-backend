@@ -6,6 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Param,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,8 +29,23 @@ export class DocumentsController {
 
   @Get('submissions')
   async getSubmissions() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.documentsService.getSubmissions();
+  }
+
+  @Get('submissions/:id')
+  async getSubmissionDetails(@Param('id') id: string) {
+    return this.documentsService.getSubmissionDetails(id);
+  }
+
+  @Post('submitters/:id/resend')
+  async resendEmail(@Param('id') id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.documentsService.resendSubmitterEmail(id);
+  }
+
+  @Get('submitters/:id/sign-url')
+  async getSignUrl(@Param('id') id: string) {
+    return this.documentsService.getSubmitterSignUrl(id);
   }
 
   @Post('templates')
