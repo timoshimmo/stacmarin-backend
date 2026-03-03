@@ -56,10 +56,12 @@ export class DocumentsController {
       limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     }),
   )
+
+  /*
   async createTemplate(@Body('name') name: string, @UploadedFile() file: any) {
     return this.documentsService.createTemplate(name, file);
   }
-
+  */
   @Get('templates/:id')
   async getTemplateDetails(@Param('id') id: string) {
     return this.documentsService.getTemplateDetails(id);

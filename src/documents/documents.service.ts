@@ -378,6 +378,7 @@ export class DocumentsService {
     }
   }
 
+  /*
   async createTemplate(name: string, file: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -445,6 +446,7 @@ export class DocumentsService {
       );
     }
   }
+  */
 
   /*
   private async uploadToCpanel(file: any): Promise<string> {
