@@ -378,7 +378,6 @@ export class DocumentsService {
     }
   }
 
-  /*
   async createTemplate(name: string, file: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -446,7 +445,6 @@ export class DocumentsService {
       );
     }
   }
-  */
 
   /*
   private async uploadToCpanel(file: any): Promise<string> {
@@ -692,6 +690,124 @@ export class DocumentsService {
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         error.message || 'Failed to process document for builder',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async signBlob(url: string, filename: string, user: User) {
+    try {
+      this.logger.log(`Processing blob for signature: ${url} (${filename})`);
+
+      // 1. Fetch file from URL to create template (Docuseal requires file content for template creation)
+      const response = await fetch(url);
+      // eslint-disable-next-line prettier/prettier
+      if (!response.ok) throw new Error(`Failed to fetch file from blob storage: ${response.statusText}`);
+      // eslint-disable-next-line prettier/prettier
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const base64File = Buffer.from(arrayBuffer).toString('base64');
+
+      // 2. Create a template
+      const templatePayload = {
+        name: `Quick Sign: ${filename}`,
+        documents: [
+          {
+            name: filename,
+            file: base64File,
+          },
+        ],
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const template = await this.fetchFromDocuseal('/templates/pdf', {
+        method: 'POST',
+        body: JSON.stringify(templatePayload),
+      });
+
+      // 3. Generate builder token
+      const token = jwt.sign(
+        {
+          user_email: user.email,
+          integration_email: user.email,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+          template_id: template.id,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          name: template.name,
+          document_urls: [url],
+          external_id: crypto.randomUUID(),
+          iat: Math.floor(Date.now() / 1000),
+        },
+        this.docusealApiKey,
+      );
+
+      const host = this.getDocusealHost();
+
+      return {
+        token,
+        host,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        templateId: template.id,
+      };
+    } catch (error) {
+      this.logger.error(
+        'Failed to generate Docuseal builder token from blob:',
+        error,
+      );
+      throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message || 'Failed to process document for builder',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async createTemplateFromBlob(name: string, url: string, filename: string) {
+    try {
+      this.logger.log(`Creating template from blob: ${url} (${filename})`);
+
+      // 1. Fetch file from URL
+      const response = await fetch(url);
+      if (!response.ok)
+        // eslint-disable-next-line prettier/prettier
+        throw new Error(`Failed to fetch file from blob storage: ${response.statusText}`);
+      // eslint-disable-next-line prettier/prettier
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const base64File = Buffer.from(arrayBuffer).toString('base64');
+
+      // 2. Create a template
+      const payload = {
+        name: name,
+        documents: [
+          {
+            name: filename,
+            file: base64File,
+          },
+        ],
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const result = await this.fetchFromDocuseal('/templates/pdf', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        id: result.id.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        name: result.name,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        slug: result.slug,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        description: result.description,
+      };
+    } catch (error) {
+      this.logger.error('Failed to create Docuseal template from blob:', error);
+      throw new HttpException(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        error.message || 'Failed to create organization template from blob',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
