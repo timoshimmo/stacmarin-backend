@@ -51,7 +51,11 @@ export class DocumentsController {
   @Post('templates')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    }),
+  )
   async createTemplate(@Body('name') name: string, @UploadedFile() file: any) {
     return this.documentsService.createTemplate(name, file);
   }
@@ -70,7 +74,11 @@ export class DocumentsController {
   }
 
   @Post('upload-sign')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    }),
+  )
   uploadAndSign(@GetUser() user: User, @UploadedFile() file: any) {
     return this.documentsService.uploadAndSign(file, user);
   }
