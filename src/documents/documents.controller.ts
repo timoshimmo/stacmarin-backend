@@ -120,6 +120,7 @@ export class DocumentsController {
         onBeforeGenerateToken: async (pathname, clientPayload) => {
           return {
             allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+            addOverwriteToken: true,
             tokenPayload: JSON.stringify({
               userId: 'user-id',
             }),
