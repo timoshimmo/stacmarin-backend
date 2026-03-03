@@ -3,12 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as jwt from 'jsonwebtoken';
+import { put } from '@vercel/blob';
 
 @Injectable()
 export class DocumentsService {
   private readonly logger = new Logger(DocumentsService.name);
   private readonly docusealUrl: string;
   private readonly docusealApiKey: string;
+  private readonly blobToken: string;
 
   constructor(
     private configService: ConfigService,
@@ -22,6 +24,10 @@ export class DocumentsService {
     this.docusealApiKey = this.configService.get<string>(
       'DOCUSEAL_API_KEY',
       'TJ8WwCevJbZskvB5Cr1YyWB23CzDUHAvYDxouPbrjVK',
+    );
+    this.blobToken = this.configService.get<string>(
+      'BLOB_READ_WRITE_TOKEN',
+      'vercel_blob_rw_AZL5HP1YNl92DRy2_xkvINmdQuSdvNNnfNMIjRcUl0J4oU6',
     );
   }
 
@@ -632,17 +638,34 @@ export class DocumentsService {
         file,
       );
 
+      // 1. Upload to Vercel Blob
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const { url: blobUrl } = await put(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `documents/${Date.now()}_${file.originalname}`,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        file.buffer,
+        {
+          access: 'public',
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          contentType: file.mimetype,
+          token: this.blobToken,
+        },
+      );
+
+      this.logger.log(`Document uploaded to Vercel Blob: ${blobUrl}`);
+
       //const cpanelUrl = await this.uploadToCpanel(file);
 
       // Generate a builder token for the uploaded document
       const token = jwt.sign(
         {
           user_email: 'help.stacconnect@gmail.com', //Email of the owner of the API signing key - admin user email.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          template_id: parseInt(template.id, 10), // The template we just created
+          template_id: null, // The template we just created
+          external_id: crypto.randomUUID(),
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
           name: file.originalname,
-          // document_urls: [cpanelUrl], // Added document_urls as requested
+          document_urls: [blobUrl],
         },
         this.docusealApiKey,
         { algorithm: 'HS256' },
