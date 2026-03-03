@@ -710,7 +710,7 @@ export class DocumentsService {
 
       // 2. Create a template
       const templatePayload = {
-        name: `Quick Sign: ${filename}`,
+        name: filename,
         documents: [
           {
             name: filename,
@@ -728,10 +728,9 @@ export class DocumentsService {
       // 3. Generate builder token
       const token = jwt.sign(
         {
-          user_email: user.email,
+          user_email: 'help.stacconnect@gmail.com',
           integration_email: user.email,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-          template_id: template.id,
+          template_id: null,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           name: template.name,
           document_urls: [url],
