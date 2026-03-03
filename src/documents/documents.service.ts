@@ -632,12 +632,12 @@ export class DocumentsService {
   async uploadAndSign(file: any, user: User) {
     try {
       //const base64File = file.buffer.toString('base64');
-      const template = await this.createTemplate(
+      /*const template = await this.createTemplate(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `${file.originalname}`,
         file,
       );
-
+      */
       // 1. Upload to Vercel Blob
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const { url: blobUrl } = await put(
@@ -684,8 +684,6 @@ export class DocumentsService {
       return {
         token,
         host,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        templateId: template.id,
       };
     } catch (error) {
       this.logger.error('Failed to generate Docuseal builder token:', error);
