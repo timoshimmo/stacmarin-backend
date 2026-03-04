@@ -581,7 +581,7 @@ export class DocumentsService {
   }
   */
 
-  async createSubmission(templateId: string, body?: any) {
+  async createSubmission(templateId: string, user: User, body?: any) {
     try {
       let payload: any;
 
@@ -627,13 +627,12 @@ export class DocumentsService {
         throw new Error('No submission returned from signature service');
       }
 
-      /* await this.notificationsService.create({
+      await this.notificationsService.create({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         user: user.id as any,
         type: 'document',
-        message: `Action Required: New document signature requested.`,
+        message: `Action Required: New document signature requested to users.`,
       });
-      */
 
       const host = this.getDocusealHost();
 
