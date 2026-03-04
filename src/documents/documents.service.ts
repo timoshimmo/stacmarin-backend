@@ -639,11 +639,11 @@ export class DocumentsService {
       );
       */
       // 1. Upload to Vercel Blob
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+
       const { url: blobUrl } = await put(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         `documents/${Date.now()}_${file.originalname}`,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
         file.buffer,
         {
           access: 'public',
