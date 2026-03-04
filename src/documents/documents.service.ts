@@ -404,6 +404,8 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         roles: template.roles || [{ name: 'Signer' }], // Default to 'Signer' if no roles defined
         schema: combinedSchema,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        submitters: template.submitters || [],
       };
     } catch (error) {
       this.logger.error(`Failed to fetch template ${id} details:`, error);
