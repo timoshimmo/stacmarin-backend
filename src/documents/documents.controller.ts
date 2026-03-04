@@ -70,12 +70,23 @@ export class DocumentsController {
     return this.documentsService.getTemplateDetails(id);
   }
 
+  /*
   @Post('sign')
   async createSignatureSubmission(
     @GetUser() user: User,
     @Body('templateId') templateId: string,
   ) {
     return this.documentsService.createSubmission(templateId, user);
+  }
+  */
+
+  @Post('sign')
+  async createSignatureSubmission(
+    @GetUser() user: User,
+    @Body('templateId') templateId: string,
+    @Body() body: any,
+  ) {
+    return this.documentsService.createSubmission(templateId, user, body);
   }
 
   @Post('upload-sign')
