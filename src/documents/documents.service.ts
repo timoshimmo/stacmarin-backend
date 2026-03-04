@@ -767,10 +767,11 @@ export class DocumentsService {
         {
           user_email: 'help.stacconnect@gmail.com',
           integration_email: user.email,
-          template_id: null,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          template_id: template.id,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           name: template.name,
-          document_urls: [url],
+          //document_urls: [url],
           external_id: crypto.randomUUID(),
           iat: Math.floor(Date.now() / 1000),
         },
