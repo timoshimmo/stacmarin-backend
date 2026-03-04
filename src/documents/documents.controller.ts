@@ -111,9 +111,7 @@ export class DocumentsController {
   @Post('upload')
   async upload(@Body() body: HandleUploadBody, @Req() req: Request) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
       const jsonResponse = await handleUpload({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         body,
         request: req,
         // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
@@ -132,7 +130,6 @@ export class DocumentsController {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return jsonResponse;
       // eslint-disable-next-line prettier/prettier
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
