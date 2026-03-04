@@ -385,6 +385,7 @@ export class DocumentsService {
         });
       }
 
+      console.log('Template Details:', JSON.stringify(template));
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       console.log('Template Schema:', JSON.stringify(template.schema));
       console.log('Combined Schema:', JSON.stringify(combinedSchema));
