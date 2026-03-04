@@ -355,6 +355,42 @@ export class DocumentsService {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const template = await this.fetchFromDocuseal(`/templates/${id}`);
+
+      // Aggregate schema from all documents and merge with top-level schema
+      // Docuseal sometimes has fields in documents that aren't in the top-level schema yet
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, prettier/prettier, @typescript-eslint/no-unsafe-assignment
+      const combinedSchema = Array.isArray(template.schema) ? [...template.schema] : [];
+      
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (template.documents && Array.isArray(template.documents)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        template.documents.forEach((doc: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+          if (doc.schema && Array.isArray(doc.schema)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            doc.schema.forEach((field: any) => {
+              // Check if field already exists in combinedSchema to avoid duplicates
+              // eslint-disable-next-line prettier/prettier
+              const exists = combinedSchema.some((f: any) => 
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  (f.id && f.id === field.id) ||
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  (f.name && f.name === field.name && f.type === field.type),
+              );
+              if (!exists) {
+                combinedSchema.push(field);
+              }
+            });
+          }
+        });
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      console.log('Template Schema:', JSON.stringify(template.schema));
+      console.log('Combined Schema:', JSON.stringify(combinedSchema));
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      console.log('Template Roles:', template.roles);
+
       return {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         id: template.id.toString(),
@@ -366,8 +402,7 @@ export class DocumentsService {
         description: template.description,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         roles: template.roles || [{ name: 'Signer' }], // Default to 'Signer' if no roles defined
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        schema: template.schema,
+        schema: combinedSchema,
       };
     } catch (error) {
       this.logger.error(`Failed to fetch template ${id} details:`, error);
@@ -649,6 +684,7 @@ export class DocumentsService {
           access: 'public',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           contentType: file.mimetype,
+          allowOverwrite: true,
           token: this.blobToken,
         },
       );
