@@ -595,7 +595,8 @@ export class DocumentsService {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           order: body.order || 'random',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          send_email: body.send_email !== undefined ? body.send_email : true,
+          send_email: body.send_email || true,
+          external_id: crypto.randomUUID(),
         };
       } else {
         // Default quick sign logic
@@ -606,7 +607,7 @@ export class DocumentsService {
               email: user.email,
               role: 'Signer',
               name: user.name,
-              external_id: user.id.toString(),
+              external_id: crypto.randomUUID(),
             },
           ],
           send_email: false,
