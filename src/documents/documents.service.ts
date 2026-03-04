@@ -581,7 +581,7 @@ export class DocumentsService {
   }
   */
 
-  async createSubmission(templateId: string, user: User, body?: any) {
+  async createSubmission(templateId: string, body?: any) {
     try {
       let payload: any;
 
@@ -598,7 +598,7 @@ export class DocumentsService {
           send_email: body.send_email || true,
           external_id: crypto.randomUUID(),
         };
-      } else {
+      } /*else {
         // Default quick sign logic
         payload = {
           template_id: parseInt(templateId, 10),
@@ -612,7 +612,7 @@ export class DocumentsService {
           ],
           send_email: false,
         };
-      }
+      } */
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const result = await this.fetchFromDocuseal('/submissions', {
@@ -627,12 +627,13 @@ export class DocumentsService {
         throw new Error('No submission returned from signature service');
       }
 
-      await this.notificationsService.create({
+      /* await this.notificationsService.create({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         user: user.id as any,
         type: 'document',
         message: `Action Required: New document signature requested.`,
       });
+      */
 
       const host = this.getDocusealHost();
 
