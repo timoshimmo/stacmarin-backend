@@ -328,6 +328,8 @@ export class DocumentsService {
         }
       }
 
+      console.log(`Submission Details: ${JSON.stringify(submission, null, 2)}`);
+
       return this.mapSubmission(submission, host, templateSlug);
     } catch (error) {
       this.logger.error(`Failed to fetch submission ${id} details:`, error);
