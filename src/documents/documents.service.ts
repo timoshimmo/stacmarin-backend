@@ -284,8 +284,14 @@ export class DocumentsService {
 
   async getSubmissionDocuments(id: string) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const submissionDoc = await this.fetchFromDocuseal(
+        `/submissions/${id}/documents`,
+      );
+
+      console.log(`Submission Doc: ${JSON.stringify(submissionDoc, null, 2)}`);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return await this.fetchFromDocuseal(`/submissions/${id}/documents`);
+      return submissionDoc;
     } catch (error) {
       this.logger.error(
         `Failed to fetch documents for submission ${id}:`,
