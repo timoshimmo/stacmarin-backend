@@ -282,6 +282,22 @@ export class DocumentsService {
     };
   }
 
+  async getSubmissionDocuments(id: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.fetchFromDocuseal(`/submissions/${id}/documents`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch documents for submission ${id}:`,
+        error,
+      );
+      throw new HttpException(
+        'Failed to fetch submission documents',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
   async getSubmissionDetails(id: string) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -384,13 +400,6 @@ export class DocumentsService {
           }
         });
       }
-
-      console.log('Template Details:', JSON.stringify(template));
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      console.log('Template Schema:', JSON.stringify(template.schema));
-      console.log('Combined Schema:', JSON.stringify(combinedSchema));
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      console.log('Template Roles:', template.roles);
 
       return {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access

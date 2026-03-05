@@ -42,6 +42,12 @@ export class DocumentsController {
     return this.documentsService.getSubmissionDetails(id);
   }
 
+  @Get('submissions/:id/documents')
+  async getSubmissionDocuments(@Param('id') id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.documentsService.getSubmissionDocuments(id);
+  }
+
   @Post('submitters/:id/resend')
   async resendEmail(@Param('id') id: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
