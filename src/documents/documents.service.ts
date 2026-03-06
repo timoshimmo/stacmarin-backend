@@ -613,7 +613,8 @@ export class DocumentsService {
           order: body.order || 'random',
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           send_email: body.send_email || true,
-          external_id: user.id,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          external_id: body.external_id || user.id.toString(),
         };
       } /*else {
         // Default quick sign logic
