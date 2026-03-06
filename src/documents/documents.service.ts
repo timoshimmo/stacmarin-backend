@@ -871,6 +871,28 @@ export class DocumentsService {
     }
   }
 
+  async proxyPdf(url: string) {
+    try {
+      this.logger.log(`Proxying PDF from: ${url}`);
+      const response = await fetch(url);
+      // eslint-disable-next-line prettier/prettier
+      if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      // eslint-disable-next-line prettier/prettier
+      const contentType = response.headers.get('content-type') || 'application/pdf';
+
+      return { buffer, contentType };
+    } catch (error) {
+      this.logger.error(`Proxy PDF failed for ${url}:`, error);
+      throw new HttpException(
+        'Failed to fetch document',
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+  }
+
   /*
   async uploadAndSign(file: any, user: User) {
     try {

@@ -10,6 +10,7 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -19,7 +20,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 @UseGuards(JwtAuthGuard)
 @Controller('documents')
@@ -85,6 +86,18 @@ export class DocumentsController {
     return this.documentsService.createSubmission(templateId, user);
   }
   */
+
+  @Get('proxy-pdf')
+  async proxyPdf(@Req() req: Request, @Res() res: Response) {
+    const url = req.query.url as string;
+    // eslint-disable-next-line prettier/prettier
+    if (!url) throw new HttpException('URL is required', HttpStatus.BAD_REQUEST);
+    const { buffer, contentType } = await this.documentsService.proxyPdf(url);
+
+    res.set('Content-Type', contentType);
+
+    res.send(buffer);
+  }
 
   @Post('sign')
   async createSignatureSubmission(
