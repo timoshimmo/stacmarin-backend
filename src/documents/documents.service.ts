@@ -253,6 +253,7 @@ export class DocumentsService {
       slug: s.slug,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       url: signingUrl,
+      template_slug: finalTemplateSlug,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       status: s.status || 'pending',
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
