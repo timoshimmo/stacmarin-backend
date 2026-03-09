@@ -607,6 +607,15 @@ export class DocumentsService {
     try {
       let payload: any;
 
+      console.log(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        `External ID PASSED: ${JSON.stringify(body.external_id, null, 2)}`,
+      );
+
+      console.log(
+        `External ID GENERATED: ${JSON.stringify(user.id.toString(), null, 2)}`,
+      );
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (body && body.submitters) {
         // Flexible submission from our own UI
@@ -645,6 +654,10 @@ export class DocumentsService {
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const submission = Array.isArray(result) ? result[0] : result;
+
+      console.log(`RESPONSE: ${JSON.stringify(result, null, 2)}`);
+
+      console.log(`RESPONSE CLEANED: ${JSON.stringify(submission, null, 2)}`);
 
       if (!submission) {
         throw new Error('No submission returned from signature service');
