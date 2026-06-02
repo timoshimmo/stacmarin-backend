@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { SendMailDto } from './dto/send-mail.dto';
 
 @Injectable()
 export class EmailService {
@@ -8,8 +9,14 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly frontendUrl: string;
 
+  private readonly apiUrl = 'https://comms.twilio.com/v1/Emails';
+  private readonly authHeader: string;
+  private readonly fromEmail: string;
+  private readonly fromName: string;
+
   constructor(private configService: ConfigService) {
     // Parse environment variables
+   /*
     const smtpHost = this.configService.get<string>('SMTP_HOST');
     const smtpPort = this.configService.get<number>('SMTP_PORT');
     const smtpUser = this.configService.get<string>('SMTP_USER');
@@ -45,7 +52,22 @@ export class EmailService {
         // Helps avoid issues with self-signed certificates in development
         rejectUnauthorized: false,
       },
-    });
+    }); */
+
+    const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID') || '';
+    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN') || '';
+   
+
+    this.authHeader =
+      'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+
+    this.fromEmail = this.configService.get<string>('TWILIO_FROM_EMAIL') || '';
+    this.fromName = this.configService.get<string>('TWILIO_FROM_NAME') || '';
+    // Default to the vercel app url if not provided
+    this.frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'https://stacmarine-webapp.vercel.app/#',
+    );
   }
 
   async sendWelcomeEmail(email: string, name: string) {
@@ -64,7 +86,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+   // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   async sendTaskAssignmentEmail(
@@ -90,7 +113,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+    // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   async sendTaskAssignmentTeamEmail(
@@ -115,7 +139,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+    // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   async sendTaskReminderEmail(
@@ -139,7 +164,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+    // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   async sendTaskDueTodayEmail(email: string, taskTitle: string) {
@@ -159,7 +185,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+    // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   async sendTaskOverdueEmail(email: string, taskTitle: string) {
@@ -179,7 +206,8 @@ export class EmailService {
         <p>The StacConnect Team</p>
       </div>
     `;
-    await this.sendMail(email, subject, html);
+    // await this.sendMail(email, subject, html);
+    await this.sendMailTwilio({ to: email, subject, html });
   }
 
   private async sendMail(to: string, subject: string, html: string) {
@@ -203,5 +231,44 @@ export class EmailService {
       this.logger.error(`Failed to send email to ${to}:`, error);
       // We don't throw here to prevent blocking the main application flow if email fails
     }
+  }
+
+  async sendMailTwilio(dto: SendMailDto): Promise<void> {
+    const toAddresses = Array.isArray(dto.to)
+      ? dto.to.map((address) => ({ address }))
+      : [{ address: dto.to }];
+
+    const payload = {
+      from: {
+        address: this.fromEmail,
+        name: this.fromName,
+      },
+      to: toAddresses,
+      content: {
+        subject: dto.subject,
+        html: dto.html,
+        ...(dto.text && { text: dto.text }),
+      },
+    };
+
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: this.authHeader,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      this.logger.error('Twilio email failed', data);
+      throw new InternalServerErrorException(
+        data?.message || 'Failed to send email',
+      );
+    }
+
+    this.logger.log(`Email sent to ${dto.to}`);
   }
 }
