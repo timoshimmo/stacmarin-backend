@@ -7,7 +7,8 @@ export type NotificationType =
   | 'kudos'
   | 'system'
   | 'mention'
-  | 'event';
+  | 'event'
+  | 'document';
 
 @Schema({
   timestamps: { updatedAt: false },
@@ -27,7 +28,7 @@ export class Notification extends Document {
 
   @Prop({
     type: String,
-    enum: ['task', 'kudos', 'system', 'mention', 'event'],
+    enum: ['task', 'kudos', 'system', 'mention', 'event', 'document'],
     default: 'system',
   })
   type: NotificationType;

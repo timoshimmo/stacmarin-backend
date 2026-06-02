@@ -5,7 +5,6 @@ import {
   ForbiddenException,
   BadRequestException,
   Logger,
-  ConsoleLogger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -123,7 +122,8 @@ export class TasksService {
         for (const assignee of task.assignees) {
           if (assignee.id.toString() !== user.id) {
             await this.notificationsService.create({
-              user: assignee,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: assignee.id as any,
               type: 'task',
               message: `New task: "${task.title}"`,
             });
@@ -155,8 +155,8 @@ export class TasksService {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           if (member.id.toString() !== user.id && !isIndividualAssignee) {
             await this.notificationsService.create({
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              user: member,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+              user: member.id as any,
               type: 'task',
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
               message: `Team Task: "${task.title}" was assigned to ${team.name}`,
@@ -302,16 +302,17 @@ export class TasksService {
 
     // Check if team assignment changed
     if (updateTaskDto.assignedTeamId !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
-      const oldTeamId = task.assignedTeam !== undefined ? task.assignedTeam?.id.toString() : null;
+      const oldTeamId =
+        task.assignedTeam !== undefined
+          ? task.assignedTeam?.id.toString()
+          : null;
       const newTeamId = updateTaskDto.assignedTeamId;
 
-      if(task.assignedTeam !== undefined) {
-        console.log(`Old Team ID Data: ${JSON.stringify(task.assignedTeam?.id)}`);
+      if (task.assignedTeam !== undefined) {
+        console.log(
+          `Old Team ID Data: ${JSON.stringify(task.assignedTeam?.id)}`,
+        );
       }
-      
-      console.log(`Old Team ID: ${JSON.stringify(oldTeamId)}`);
-      console.log(`New Team ID: ${JSON.stringify(newTeamId)}`);
 
       // Correctly handle removal or reassignment
       if (newTeamId && newTeamId.length > 20) {
@@ -320,8 +321,6 @@ export class TasksService {
 
         // If a new team is assigned (not just cleared), notify everyone on that team
         if (oldTeamId !== newTeamId) {
-          console.log(`Compare Data: ${JSON.stringify(newTeamId)} vs ${JSON.stringify(oldTeamId)}`);
-          console.log(`Boolean Result: ${JSON.stringify(oldTeamId !== newTeamId)}`);
           void this.notifyTeamMembers(id, newTeamId, user.name);
         }
       }
@@ -349,9 +348,9 @@ export class TasksService {
           startOfToday.setHours(0, 0, 0, 0);
           const endOfToday = new Date();
           endOfToday.setHours(23, 59, 59, 999);
-          
+
           if (newDueDate >= startOfToday && newDueDate <= endOfToday) {
-            //await this.triggerImmediateDueTodayNotification(task);
+            await this.triggerImmediateDueTodayNotification(task);
             task.dueReminderSent = true; // Prevents cron from double-sending today
           }
         }
@@ -373,7 +372,8 @@ export class TasksService {
         for (const assignee of savedTask.assignees) {
           if (assignee.id.toString() !== user.id) {
             await this.notificationsService.create({
-              user: assignee,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              user: assignee.id as any,
               type: 'task',
               message: `${user.name} changed the status of "${savedTask.title}" to ${savedTask.status}.`,
             });
@@ -392,7 +392,8 @@ export class TasksService {
   private async triggerImmediateDueTodayNotification(task: TaskDocument) {
     try {
       // Re-populate team members to ensure we have recipients
-      const populatedTask = await this.taskModel.findById(task.id)
+      const populatedTask = await this.taskModel
+        .findById(task.id)
         .populate('owner assignees')
         .populate({ path: 'assignedTeam', populate: { path: 'members' } })
         .exec();
@@ -402,16 +403,23 @@ export class TasksService {
       const recipients = this.getTaskRecipients(populatedTask);
       for (const [email, user] of recipients.entries()) {
         await this.notificationsService.create({
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+          user: user.id as any,
           type: 'task',
           message: `Rescheduled: Task "${populatedTask.title}" is now due today!`,
         });
         if (email) {
-          await this.emailService.sendTaskDueTodayEmail(email, populatedTask.title);
+          await this.emailService.sendTaskDueTodayEmail(
+            email,
+            populatedTask.title,
+          );
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to send immediate due notification for task ${task.id}:`, error);
+      this.logger.error(
+        `Failed to send immediate due notification for task ${task.id}:`,
+        error,
+      );
     }
   }
 
@@ -435,7 +443,8 @@ export class TasksService {
           );
         }
         await this.notificationsService.create({
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
+          user: user.id as any,
           type: 'task',
           message: `${assignerName} assigned you to task: "${task.title}"`,
         });
@@ -472,7 +481,8 @@ export class TasksService {
           }
           // Also add in-app notification
           await this.notificationsService.create({
-            user: member,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            user: member.id as any,
             type: 'task',
             message: `${assignerName} assigned your team to task: "${task.title}"`,
           });
@@ -487,31 +497,41 @@ export class TasksService {
   }
 
   /**
-  * Helper to collect all unique recipients (owner, individual assignees, team members)
-  */
+   * Helper to collect all unique recipients (owner, individual assignees, team members)
+   */
   private getTaskRecipients(task: any): Map<string, any> {
     const recipients = new Map<string, any>();
 
     console.log(`Recipients Task: ${JSON.stringify(task)}`);
 
     // Owner
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (task.owner && task.owner.email) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       recipients.set(task.owner.email, task.owner);
     }
 
     // Individual Assignees
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (task.assignees?.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       for (const assignee of task.assignees) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (assignee.email) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           recipients.set(assignee.email, assignee);
         }
       }
     }
 
     // Team Members
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (task.assignedTeam?.members?.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       for (const member of task.assignedTeam.members) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (member.email) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
           recipients.set(member.email, member);
         }
       }
@@ -557,7 +577,8 @@ export class TasksService {
         const mentionedUser = allUsers.find(u => u.name.toLowerCase() === nameToFind.toLowerCase());
         if (mentionedUser && mentionedUser.id !== user.id) {
           await this.notificationsService.create({
-            user: mentionedUser,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
+            user: mentionedUser.id as any,
             type: 'mention',
             message: `${user.name} mentioned you in a comment on "${task.title}"`,
           });
@@ -677,7 +698,8 @@ export class TasksService {
     for (const assignee of task.assignees) {
       // Create notification
       await this.notificationsService.create({
-        user: assignee,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        user: assignee.id as any,
         type: 'task',
         message: `Reminder: Please check task "${task.title}". Sent by ${user.name}.`,
       });

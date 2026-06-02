@@ -38,7 +38,8 @@ export class EventsScheduler {
           });
 
           await this.notificationsService.create({
-            user: attendee,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            user: attendee.id as any,
             type: 'event',
             message: `Reminder: You have an event "${event.title}" starting soon at ${startTime}.`,
           });

@@ -24,7 +24,7 @@ export class TeamsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
   create(@Body() dto: CreateTeamDto, @GetUser() user: User) {
     return this.teamsService.create(dto, user);
   }
@@ -41,14 +41,14 @@ export class TeamsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateTeamDto) {
     return this.teamsService.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.teamsService.remove(id);
   }

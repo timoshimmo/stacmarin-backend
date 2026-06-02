@@ -33,8 +33,8 @@ export class TasksScheduler {
       for (const [email, user] of recipients.entries()) {
         // In-app notification
         await this.notificationsService.create({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+          user: user.id as any,
           type: 'task',
           message: `Reminder: Task "${task.title}" is overdue.`,
         });
@@ -78,8 +78,8 @@ export class TasksScheduler {
       for (const [email, user] of recipients.entries()) {
         // In-app notification
         await this.notificationsService.create({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          user: user,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-member-access
+          user: user.id as any,
           type: 'task',
           message: `Action Required: Task "${task.title}" is due today!`,
         });

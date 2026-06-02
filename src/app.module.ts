@@ -16,6 +16,7 @@ import { FileStorageModule } from './file-storage/file-storage.module';
 import { RecognitionModule } from './recognition/recognition.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { TeamsModule } from './teams/teams.module';
+import { DocumentsModule } from './documents/documents.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TeamsModule } from './teams/teams.module';
     FileStorageModule,
     SurveysModule,
     TeamsModule,
+    DocumentsModule,
   ],
   controllers: [],
   providers: [],
