@@ -210,6 +210,113 @@ export class EmailService {
     await this.sendMailTwilio({ to: email, subject, html });
   }
 
+  async sendSignerProgressEmail(
+    toEmail: string,
+    firstSignerName: string,
+    documentTitle: string,
+    signerName: string,
+    signerEmail: string,
+    signerRole: string,
+    completedCount: number,
+    totalSigners: number,
+  ) {
+    const subject = `Document Signing Update: ${signerName || signerEmail} has signed "${documentTitle}"`;
+    const html = `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #1e293b; padding: 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">STACCONNECT</h1>
+          <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px; text-transform: uppercase;">Document Signature Progress</p>
+        </div>
+        <div style="padding: 32px 24px;">
+          <h2 style="color: #0f172a; margin-top: 0; font-size: 18px;">Signature Progress Update</h2>
+          <p>Hello ${firstSignerName || 'there'},</p>
+          <p>A signer has just completed their signature for <strong>${documentTitle}</strong>.</p>
+          
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Signer:</strong> ${signerName || signerEmail} ${signerEmail ? `&lt;${signerEmail}&gt;` : ''}</p>
+            ${signerRole ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Role:</strong> ${signerRole}</p>` : ''}
+            <p style="margin: 8px 0 4px 0; font-size: 14px;"><strong>Signing Progress:</strong> <span style="color: #2563eb; font-weight: bold;">${completedCount} of ${totalSigners}</span> signatures completed</p>
+          </div>
+
+          <p style="font-size: 14px; color: #64748b; line-height: 1.6;">
+            As the first signer, you are receiving this sequential update. You will receive notifications as each subsequent party signs, until the final signer completes the document.
+          </p>
+
+          <div style="text-align: center; margin: 28px 0;">
+            <a href="${this.frontendUrl}/documents" style="background-color: #2563eb; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+              View Document Status
+            </a>
+          </div>
+
+          <p style="font-size: 13px; color: #94a3b8; margin-top: 24px;">
+            Best regards,<br/>
+            The StacConnect Team
+          </p>
+        </div>
+      </div>
+    `;
+    await this.sendMailTwilio({ to: toEmail, subject, html });
+  }
+
+
+   async sendDocumentSigningCompletedEmail(
+    toEmail: string,
+    firstSignerName: string,
+    documentTitle: string,
+    lastSignerName: string,
+    lastSignerEmail: string,
+    lastSignerRole: string,
+    downloadUrl?: string,
+  ) {
+    const subject = `Document Signing Complete: "${documentTitle}"`;
+    const html = `
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background-color: #16a34a; padding: 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 1px;">STACCONNECT</h1>
+          <p style="color: #dcfce7; margin: 4px 0 0 0; font-size: 12px; text-transform: uppercase;">Signing Completed</p>
+        </div>
+        <div style="padding: 32px 24px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <span style="background-color: #dcfce7; color: #15803d; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">
+              ✓ All Signatures Complete
+            </span>
+          </div>
+
+          <h2 style="color: #0f172a; margin-top: 0; font-size: 18px; text-align: center;">Document Signing is Complete!</h2>
+          <p>Hello ${firstSignerName || 'there'},</p>
+          <p>The document signing process for <strong>${documentTitle}</strong> has reached completion.</p>
+          
+          <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <p style="margin: 4px 0; font-size: 14px;"><strong>Final Signer:</strong> ${lastSignerName || lastSignerEmail} ${lastSignerEmail ? `&lt;${lastSignerEmail}&gt;` : ''}</p>
+            ${lastSignerRole ? `<p style="margin: 4px 0; font-size: 14px;"><strong>Role:</strong> ${lastSignerRole}</p>` : ''}
+            <p style="margin: 4px 0; font-size: 14px; color: #15803d;"><strong>Status:</strong> All required parties have signed.</p>
+          </div>
+
+          <p style="font-size: 14px; color: #64748b; line-height: 1.6;">
+            The final signature has been recorded and the document is now fully executed and available for download.
+          </p>
+
+          <div style="text-align: center; margin: 28px 0;">
+            ${downloadUrl ? `
+              <a href="${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}merge=true" style="background-color: #16a34a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block; margin-right: 8px;">
+                Download Signed Document
+              </a>
+            ` : ''}
+            <a href="${this.frontendUrl}/documents" style="background-color: #1e293b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+              View in StacConnect
+            </a>
+          </div>
+
+          <p style="font-size: 13px; color: #94a3b8; margin-top: 24px;">
+            Best regards,<br/>
+            The StacConnect Team
+          </p>
+        </div>
+      </div>
+    `;
+    await this.sendMailTwilio({ to: toEmail, subject, html });
+  }
+
   private async sendMail(to: string, subject: string, html: string) {
     const from = this.configService.get<string>(
       'SMTP_FROM',

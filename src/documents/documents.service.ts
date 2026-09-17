@@ -1,9 +1,14 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as jwt from 'jsonwebtoken';
 import { put } from '@vercel/blob';
+import { DocumentNotificationLog } from './entities/document-notification-log.entity';
+import { UsersService } from 'src/users/users.service';
+import { EmailService } from 'src/email/email.service';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class DocumentsService {
@@ -11,10 +16,15 @@ export class DocumentsService {
   private readonly docusealUrl: string;
   private readonly docusealApiKey: string;
   private readonly blobToken: string;
+  private readonly sentNotificationsSet = new Set<string>();
 
   constructor(
+    @InjectModel(DocumentNotificationLog.name)
+    private notificationLogModel: Model<DocumentNotificationLog>,
     private configService: ConfigService,
     private notificationsService: NotificationsService,
+    private emailService: EmailService,
+    private usersService: UsersService,
   ) {
     // DOCUSEAL_URL should be the Render URL of your Docuseal instance
     this.docusealUrl = this.configService.get<string>(
@@ -78,62 +88,6 @@ export class DocumentsService {
       return []; // Return empty instead of crashing
     }
   }
-
-  /* Version 1
-  async getSubmissions() {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result = await this.fetchFromDocuseal('/submissions');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const submissionList = Array.isArray(result) ? result : result.data || [];
-      const host = 'docuseal.com';
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return submissionList.map((s) => this.mapSubmission(s, host));
-    } catch (error) {
-      this.logger.error('Failed to fetch submissions from Docuseal:', error);
-      return [];
-    }
-  }
-
-  */
-
-  /* Version 2 with template slug mapping and improved signing URL logic
-  async getSubmissions() {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const [submissionsResult, templatesResult] = await Promise.all([
-        this.fetchFromDocuseal('/submissions'),
-        this.fetchFromDocuseal('/templates'),
-      ]);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, prettier/prettier, @typescript-eslint/no-unsafe-member-access
-      const submissionList = Array.isArray(submissionsResult) ? submissionsResult : submissionsResult.data || [];
-      // eslint-disable-next-line prettier/prettier, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const templateList = Array.isArray(templatesResult) ? templatesResult : templatesResult.data || [];
-
-      // Create a map of template_id to slug for efficient lookup
-      const templateMap = new Map();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      templateList.forEach((t) => templateMap.set(t.id, t.slug));
-
-      const host = this.getDocusealHost();
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return submissionList.map((s) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const templateId = s.template?.id || s.template_id;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const templateSlug = templateMap.get(templateId);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return this.mapSubmission(s, host, templateSlug);
-      });
-    } catch (error) {
-      this.logger.error('Failed to fetch submissions from Docuseal:', error);
-      return [];
-    }
-  }
-*/
 
   async getSubmissions() {
     try {
@@ -489,7 +443,7 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         description: result.description,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to create Docuseal template:', {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         message: error.message,
@@ -694,7 +648,7 @@ export class DocumentsService {
       }
 
       return this.mapSubmission(submission, host, templateSlug);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to create Docuseal submission:', error);
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
@@ -761,7 +715,7 @@ export class DocumentsService {
         token,
         host,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to generate Docuseal builder token:', error);
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
@@ -825,7 +779,7 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         templateId: template.id,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         'Failed to generate Docuseal builder token from blob:',
         error,
@@ -879,7 +833,7 @@ export class DocumentsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         description: result.description,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to create Docuseal template from blob:', error);
       throw new HttpException(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
@@ -911,49 +865,240 @@ export class DocumentsService {
     }
   }
 
-  /*
-  async uploadAndSign(file: any, user: User) {
+   private async isNotificationSent(submissionId: string, submitterId: string, type: string): Promise<boolean> {
+    const key = `${submissionId}_${submitterId}_${type}`;
+    if (this.sentNotificationsSet.has(key)) {
+      return true;
+    }
     try {
-      // Docuseal API requires file content as a base64 string
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const base64File = file.buffer.toString('base64');
-      console.log('Document Uploaded For Signing');
-      // 1. Create a one-off template from the uploaded file
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const templateResponse = await this.fetchFromDocuseal('/api/templates', {
-        method: 'POST',
-        body: JSON.stringify({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          name: `Sign: ${file.originalname} - ${user.name} (${new Date().toLocaleDateString()})`,
-          documents: [
-            {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-              name: file.originalname,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              file: base64File,
-            },
-          ],
-        }),
-      });
+      if (this.notificationLogModel) {
+        const exists = await this.notificationLogModel.exists({
+          submissionId: submissionId.toString(),
+          submitterId: submitterId.toString(),
+          type,
+        });
+        if (exists) {
+          this.sentNotificationsSet.add(key);
+          return true;
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`Failed to query notification log: ${e.message}`);
+    }
+    return false;
+  }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (!templateResponse || !templateResponse.id) {
-        throw new Error('Failed to create temporary signing template');
+
+  private async recordNotificationSent(
+    submissionId: string,
+    submitterId: string,
+    type: string,
+    sentToEmail: string,
+    signerEmail?: string,
+    signerName?: string,
+  ) {
+    const key = `${submissionId}_${submitterId}_${type}`;
+    this.sentNotificationsSet.add(key);
+    try {
+      if (this.notificationLogModel) {
+        await this.notificationLogModel.create({
+          submissionId: submissionId.toString(),
+          submitterId: submitterId.toString(),
+          type,
+          sentToEmail,
+          signerEmail,
+          signerName,
+        });
+      }
+    } catch (e: any) {
+      this.logger.warn(`Failed to record notification log: ${e.message}`);
+    }
+  }
+
+  /**
+   * For multi-signer document signing workflows:
+   * - The first signer receives sequential email notifications for each intermediate signer.
+   * - The last signer's completion notifies the first signer that signing is complete.
+   */
+  async checkAndNotifySubmissionProgress(submissionId: string, specificSubmitterId?: string) {
+    try {
+      if (!submissionId) return { status: 'skipped', reason: 'no submissionId' };
+
+      const submission = await this.fetchFromDocuseal(`/submissions/${submissionId}`);
+      if (!submission) return { status: 'skipped', reason: 'submission not found' };
+
+      const submitters = submission.submitters || [];
+      // Only applicable for multiple signing process
+      if (!Array.isArray(submitters) || submitters.length <= 1) {
+        return { status: 'skipped', reason: 'not multiple signers' };
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const templateId = templateResponse.id.toString();
+      // 1. Identify the first signer
+      const firstSigner = submitters[0];
+      if (!firstSigner || !firstSigner.email) {
+        return { status: 'skipped', reason: 'first signer email missing' };
+      }
 
-      // 2. Immediately create a submission for the user for this new template
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      return this.createSubmission(templateId, user);
-    } catch (error) {
-      this.logger.error('Failed to upload and create submission:', error);
-      throw new HttpException(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        error.message || 'Failed to process document upload for signing',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      const firstSignerEmail = firstSigner.email.toLowerCase();
+      const firstSignerName = firstSigner.name || firstSigner.role || 'Signer';
+      const documentTitle = submission.template?.name || submission.template_name || 'Document';
+      const downloadUrl = submission.download_url || (submission.documents?.[0]?.url);
+
+      // Find in-app user record for first signer if available
+      let firstSignerUser: any = null;
+      try {
+        if (firstSigner.external_id) {
+          firstSignerUser = await this.usersService.findOne(firstSigner.external_id);
+        }
+        if (!firstSignerUser && firstSignerEmail) {
+          firstSignerUser = await this.usersService.findOneByEmail(firstSignerEmail);
+        }
+      } catch (e) {
+        // User not in local database or lookup skipped
+      }
+
+      const totalSigners = submitters.length;
+      const completedSubmitters = submitters.filter((s: any) => s.status === 'completed');
+      const completedCount = completedSubmitters.length;
+      const isAllCompleted = submission.status === 'completed' || completedCount === totalSigners;
+
+      // 2. Intermediate signer notifications:
+      // "the first signer should receive email notification for each signer until the last signer"
+      for (const signer of completedSubmitters) {
+        const signerId = signer.id?.toString();
+        // Skip notifying the first signer about their own signature
+        if (signerId === firstSigner.id?.toString()) {
+          continue;
+        }
+
+        // If not all signers are completed, this is an intermediate signer completion
+        if (!isAllCompleted) {
+          const alreadySent = await this.isNotificationSent(submission.id, signerId, 'signer_progress');
+          if (!alreadySent) {
+            this.logger.log(`Sending signer progress email to first signer (${firstSignerEmail}) for signer ${signer.email}`);
+            await this.emailService.sendSignerProgressEmail(
+              firstSignerEmail,
+              firstSignerName,
+              documentTitle,
+              signer.name || signer.email,
+              signer.email,
+              signer.role || 'Signer',
+              completedCount,
+              totalSigners,
+            );
+
+            if (firstSignerUser) {
+              await this.notificationsService.create({
+                user: firstSignerUser.id,
+                type: 'document',
+                message: `${signer.name || signer.email} has signed "${documentTitle}". (${completedCount} of ${totalSigners} signatures collected)`,
+              });
+            }
+
+            await this.recordNotificationSent(
+              submission.id,
+              signerId,
+              'signer_progress',
+              firstSignerEmail,
+              signer.email,
+              signer.name,
+            );
+          }
+        }
+      }
+
+      // 3. Final completion notification:
+      // "The last signer should notify them the signing is complete"
+      if (isAllCompleted) {
+        const alreadySent = await this.isNotificationSent(submission.id, 'all', 'signing_completed');
+        if (!alreadySent) {
+          // Identify the last signer who finalized the signing
+          let lastSigner: any = null;
+          if (specificSubmitterId) {
+            lastSigner = submitters.find((s: any) => s.id?.toString() === specificSubmitterId.toString());
+          }
+          if (!lastSigner) {
+            // Find submitter with the latest completed_at, or the last non-first signer in the array
+            const sortedByDate = [...completedSubmitters].sort((a: any, b: any) => {
+              const timeA = a.completed_at ? new Date(a.completed_at).getTime() : 0;
+              const timeB = b.completed_at ? new Date(b.completed_at).getTime() : 0;
+              return timeB - timeA;
+            });
+            lastSigner = sortedByDate[0] || submitters[submitters.length - 1];
+          }
+
+          const lastSignerName = lastSigner?.name || lastSigner?.email || 'Final Signer';
+          const lastSignerEmail = lastSigner?.email || '';
+          const lastSignerRole = lastSigner?.role || 'Signer';
+
+          this.logger.log(`Sending document signing completion email to first signer (${firstSignerEmail}). Final signer was ${lastSignerEmail}`);
+          await this.emailService.sendDocumentSigningCompletedEmail(
+            firstSignerEmail,
+            firstSignerName,
+            documentTitle,
+            lastSignerName,
+            lastSignerEmail,
+            lastSignerRole,
+            downloadUrl,
+          );
+
+          if (firstSignerUser) {
+            await this.notificationsService.create({
+              user: firstSignerUser.id,
+              type: 'document',
+              message: `Document Complete: "${documentTitle}" has been signed by all parties. Final signature provided by ${lastSignerName}.`,
+            });
+          }
+
+          await this.recordNotificationSent(
+            submission.id,
+            'all',
+            'signing_completed',
+            firstSignerEmail,
+            lastSignerEmail,
+            lastSignerName,
+          );
+        }
+      }
+
+      return {
+        status: 'success',
+        submissionId: submission.id,
+        completedCount,
+        totalSigners,
+        isAllCompleted,
+      };
+    } catch (error: any) {
+      this.logger.error(`Error in checkAndNotifySubmissionProgress for submission ${submissionId}:`, error);
+      return { status: 'error', message: error.message };
     }
-  }*/
+  }
+
+  async handleWebhook(body: any, headers?: any) {
+    try {
+      this.logger.log(`Handling Docuseal webhook event: ${body?.event_type}`);
+      const eventType = body?.event_type;
+      const data = body?.data;
+
+      if (!data) {
+        return { received: true };
+      }
+
+      const submissionId = data.submission?.id || data.submission_id || (eventType === 'submission.completed' ? data.id : null);
+      const submitterId = data.submission ? data.id : null;
+
+      if (submissionId) {
+        await this.checkAndNotifySubmissionProgress(
+          submissionId.toString(),
+          submitterId ? submitterId.toString() : undefined,
+        );
+      }
+
+      return { received: true, eventType, submissionId };
+    } catch (error: any) {
+      this.logger.error('Error handling Docuseal webhook:', error);
+      return { received: true, error: error.message };
+    }
+  }
+
 }

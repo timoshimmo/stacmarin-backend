@@ -10,6 +10,7 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  Headers,
   Res,
 } from '@nestjs/common';
 import { DocumentsService } from './documents.service';
@@ -22,44 +23,61 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import type { Request, Response } from 'express';
 
-@UseGuards(JwtAuthGuard)
 @Controller('documents')
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
+  @Post('webhook')
+  async handleWebhook(@Body() body: any, @Headers() headers: any) {
+    return this.documentsService.handleWebhook(body, headers);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('submissions/:id/notify-progress')
+  async notifyProgress(@Param('id') id: string, @Body() body: any) {
+    return this.documentsService.checkAndNotifySubmissionProgress(id, body?.submitterId?.toString());
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('templates')
   async getTemplates() {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.documentsService.getTemplates();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('submissions')
   async getSubmissions() {
     return this.documentsService.getSubmissions();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('submissions/:id')
   async getSubmissionDetails(@Param('id') id: string) {
     return this.documentsService.getSubmissionDetails(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('submissions/:id/documents')
   async getSubmissionDocuments(@Param('id') id: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.documentsService.getSubmissionDocuments(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('submitters/:id/resend')
   async resendEmail(@Param('id') id: string) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.documentsService.resendSubmitterEmail(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('submitters/:id/sign-url')
   async getSignUrl(@Param('id') id: string) {
     return this.documentsService.getSubmitterSignUrl(id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('templates')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
@@ -72,6 +90,7 @@ export class DocumentsController {
     return this.documentsService.createTemplate(name, file);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('templates/:id')
   async getTemplateDetails(@Param('id') id: string) {
     return this.documentsService.getTemplateDetails(id);
@@ -99,6 +118,7 @@ export class DocumentsController {
     res.send(buffer);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('sign')
   async createSignatureSubmission(
     @GetUser() user: User,
@@ -108,6 +128,7 @@ export class DocumentsController {
     return this.documentsService.createSubmission(templateId, user, body);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('upload-sign')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -118,6 +139,7 @@ export class DocumentsController {
     return this.documentsService.uploadAndSign(file, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('sign-blob')
   async signBlob(
     @GetUser() user: User,
@@ -127,6 +149,7 @@ export class DocumentsController {
     return this.documentsService.signBlob(url, filename, user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('templates-blob')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
@@ -138,6 +161,7 @@ export class DocumentsController {
     return this.documentsService.createTemplateFromBlob(name, url, filename);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('upload')
   async upload(@Body() body: HandleUploadBody, @Req() req: Request) {
     try {
