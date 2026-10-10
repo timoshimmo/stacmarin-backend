@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { StoredFile, StoredFileDocument } from './entities/stored-file.entity';
 import { Buffer } from 'buffer';
+import { put } from '@vercel/blob';
 
 @Injectable()
 export class FileStorageService {
@@ -12,6 +13,7 @@ export class FileStorageService {
     @InjectModel(StoredFile.name) private fileModel: Model<StoredFileDocument>,
   ) {}
 
+  /*
   async saveFile(buffer: Buffer, originalName: string): Promise<string> {
     const createdFile = new this.fileModel({
       filename: originalName,
@@ -24,7 +26,34 @@ export class FileStorageService {
     // Return an API path that the FilesController will handle
     return `/files/download/${saved.id}`;
   }
+*/
 
+  async saveFile(buffer: Buffer, originalName: string, subFolder: string): Promise<string> {
+    const mimeType = this.getMimeType(originalName);
+    const sanitizedName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const blobPath = `${subFolder}/${Date.now()}-${sanitizedName}`;
+
+    try {
+      const blob = await put(blobPath, buffer, {
+        access: 'public',
+        contentType: mimeType,
+      });
+      return blob.url;
+    } catch (error: any) {
+      this.logger.warn(`Vercel Blob upload failed, falling back to DB storage: ${error.message}`);
+      const createdFile = new this.fileModel({
+        filename: originalName,
+        mimetype: mimeType,
+        size: buffer.length,
+        data: buffer,
+      });
+
+      const saved = await createdFile.save();
+      return `/files/download/${saved.id}`;
+    }
+  }
+
+  /*
   async saveBase64(base64Data: string): Promise<string> {
     const matches = base64Data.match(
       /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/,
@@ -49,6 +78,41 @@ export class FileStorageService {
 
     const saved = await createdFile.save();
     return `/files/download/${saved.id}`;
+  }
+
+  */
+
+  async saveBase64(base64Data: string, subFolder: string): Promise<string> {
+    const matches = base64Data.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      throw new Error('Invalid base64 string');
+    }
+
+    const mimeType = matches[1];
+    const data = matches[2];
+    const buffer = Buffer.from(data, 'base64');
+    
+    const extension = mimeType.split('/')[1] || 'png';
+    const filename = `upload_${Date.now()}.${extension}`;
+
+    try {
+      const blob = await put(`${subFolder}/${filename}`, buffer, {
+        access: 'public',
+        contentType: mimeType,
+      });
+      return blob.url;
+    } catch (error) {
+      this.logger.warn(`Vercel Blob upload failed, falling back to DB storage: ${error.message}`);
+      const createdFile = new this.fileModel({
+        filename: filename,
+        mimetype: mimeType,
+        size: buffer.length,
+        data: buffer,
+      });
+
+      const saved = await createdFile.save();
+      return `/files/download/${saved.id}`;
+    }
   }
 
   async getFile(id: string): Promise<StoredFileDocument | null> {

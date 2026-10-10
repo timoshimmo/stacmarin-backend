@@ -171,7 +171,7 @@ export class DocumentsController {
         // eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
         onBeforeGenerateToken: async (pathname, clientPayload) => {
           return {
-            allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+            allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'],
             addOverwriteToken: true,
             tokenPayload: JSON.stringify({
               userId: 'user-id',

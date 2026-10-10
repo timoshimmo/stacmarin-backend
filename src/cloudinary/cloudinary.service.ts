@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { v2 } from 'cloudinary';
+import { put } from '@vercel/blob';
+import { Buffer } from 'buffer';
 
 @Injectable()
 export class CloudinaryService {
+
+  /*
   async uploadFile(
     file: string,
     filename: string,
@@ -58,10 +62,38 @@ export class CloudinaryService {
       );
     });
   }
+*/
+
+ async uploadFile(file: string, filename: string, mimetype: string, folder: string): Promise<string> {
+    let buffer: Buffer;
+    let detectedMimeType = mimetype || 'application/octet-stream';
+
+    const matches = file.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+    if (matches && matches.length === 3) {
+      detectedMimeType = matches[1];
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(file, 'base64');
+    }
+
+    const extension = detectedMimeType.split('/')[1] || 'png';
+    const hasExtension = filename.includes('.');
+    const sanitizedName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const finalFilename = hasExtension ? sanitizedName : `${sanitizedName}.${extension}`;
+    const blobPath = `${folder}/${Date.now()}-${finalFilename}`;
+
+    const blob = await put(blobPath, buffer, {
+      access: 'public',
+      contentType: detectedMimeType,
+    });
+
+    return blob.url;
+  }
 
   /**
    * Specialized helper for profile avatars
    */
+  /*
   async uploadImage(file: string): Promise<string> {
     // Avatars are always treated as images and saved in the avatar folder
     const timestamp = Date.now();
@@ -73,6 +105,15 @@ export class CloudinaryService {
     );
   }
 }
+  */
+
+ /**
+   * Specialized helper for profile avatars using Vercel Blob
+   */
+  async uploadImage(file: string): Promise<string> {
+    const timestamp = Date.now();
+    return this.uploadFile(file, `avatar_${timestamp}`, 'image/png', 'avatars');
+  }
 
 /*
 
