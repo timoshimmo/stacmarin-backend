@@ -101,7 +101,7 @@ export class FileStorageService {
         contentType: mimeType,
       });
       return blob.url;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.warn(`Vercel Blob upload failed, falling back to DB storage: ${error.message}`);
       const createdFile = new this.fileModel({
         filename: filename,

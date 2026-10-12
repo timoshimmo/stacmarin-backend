@@ -620,6 +620,7 @@ export class TasksService {
       file.buffer,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
       file.originalname,
+      "assets"
     );
 
     const attachment = {
